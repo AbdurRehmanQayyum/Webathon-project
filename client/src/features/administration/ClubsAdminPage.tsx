@@ -1,4 +1,4 @@
-import { Archive, ArchiveRestore, Pencil, Plus, UserCog } from 'lucide-react'
+import { Archive, ArchiveRestore, Pencil, Plus, UserCog, UsersRound } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import { PageHeader } from '@/components/common/PageHeader'
@@ -20,9 +20,12 @@ import type { Club } from '@/features/clubs/types'
 import { useListParams } from '@/hooks/useListParams'
 import { useAdminClubs, useClubAdminActions } from './api'
 import { ClubEditor } from './ClubEditor'
+import { MembersDialog } from './MembersDialog'
 import { ModeratorsDialog } from './ModeratorsDialog'
 
-type Dialog = { type: 'edit' | 'moderators' | 'status'; clubId: number } | { type: 'create' }
+type Dialog =
+  | { type: 'edit' | 'moderators' | 'members' | 'status'; clubId: number }
+  | { type: 'create' }
 
 export function ClubsAdminPage() {
   const location = useLocation()
@@ -113,7 +116,20 @@ export function ClubsAdminPage() {
                     </div>
                   ),
                 },
-                { header: 'Members', cell: (club) => club.memberCount },
+                {
+                  header: 'Members',
+                  cell: (club) => (
+                    <button
+                      type="button"
+                      onClick={() => setDialog({ type: 'members', clubId: club.id })}
+                      className="inline-flex items-center gap-1.5 rounded font-medium text-link hover:underline"
+                    >
+                      <UsersRound className="size-4" aria-hidden="true" />
+                      {club.memberCount}
+                      <span className="sr-only"> members of {club.name}, view list</span>
+                    </button>
+                  ),
+                },
                 {
                   header: 'Moderators',
                   cell: (club) =>
@@ -180,6 +196,7 @@ export function ClubsAdminPage() {
         onClose={close}
       />
       <ModeratorsDialog club={dialog?.type === 'moderators' ? target : null} onClose={close} />
+      <MembersDialog club={dialog?.type === 'members' ? target : null} onClose={close} />
       <ConfirmDialog
         open={dialog?.type === 'status' && target !== null}
         onClose={close}

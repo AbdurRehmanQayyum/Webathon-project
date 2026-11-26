@@ -58,6 +58,27 @@ export const useUserSearch = (search: string) =>
     enabled: search.length > 0,
   })
 
+export interface ClubMember {
+  id: number
+  fullName: string
+  username: string
+  avatarFileId: number | null
+  email: string | null
+  registrationNumber: string | null
+  semester: number | null
+  isModerator: boolean
+  isActive: boolean
+  joinedAtUtc: string
+}
+
+export const useClubMembers = (clubId: number, params: QueryParams) =>
+  useQuery({
+    queryKey: ['admin', 'clubs', clubId, 'members', params],
+    queryFn: ({ signal }) =>
+      api.get<PagedResult<ClubMember>>(`/api/admin/clubs/${clubId}/members`, params, signal),
+    placeholderData: keepPreviousData,
+  })
+
 export const useAdminClubs = (params: QueryParams) =>
   useQuery({
     queryKey: ['admin', 'clubs', params],

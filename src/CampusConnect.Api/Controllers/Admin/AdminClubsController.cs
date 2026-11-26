@@ -16,6 +16,12 @@ public sealed class AdminClubsController(IClubManagementService clubs) : ApiCont
         [FromQuery] ClubQuery query, CancellationToken cancellationToken) =>
         await clubs.ListAsync(query, cancellationToken);
 
+    [Authorize(Policy = Policies.ClubDirectory)]
+    [HttpGet("{clubId:int}/members")]
+    public async Task<ActionResult<PagedResult<ClubMemberDto>>> Members(
+        int clubId, [FromQuery] PageQuery query, CancellationToken cancellationToken) =>
+        await clubs.ListMembersAsync(clubId, query, cancellationToken);
+
     [Authorize(Policy = PermissionKeys.ManageClubs)]
     [HttpPost]
     public async Task<ActionResult<ClubDto>> Create(

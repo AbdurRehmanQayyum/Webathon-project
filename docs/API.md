@@ -52,6 +52,7 @@ Access: **U** signed in, **O** owner, otherwise the permission key that is requi
 | `GET`, `POST admin/users`, `PUT admin/users/{id}/status` | `users.manage` | Creating an admin needs an admin |
 | `PUT admin/users/{id}/admin-role` | `users.manage`, admins only | Not on yourself |
 | `GET admin/clubs` | `clubs.manage` or `moderators.assign` | |
+| `GET admin/clubs/{id}/members` | `clubs.manage` or `moderators.assign` | Paged and searchable |
 | `POST admin/clubs`, `PUT admin/clubs/{id}`, `.../status` | `clubs.manage` | |
 | `PUT`, `DELETE admin/clubs/{id}/moderators/{userId}` | `moderators.assign` | |
 | `GET admin/club-requests`, `POST .../{id}/approve`, `.../reject` | `clubrequests.review` | |

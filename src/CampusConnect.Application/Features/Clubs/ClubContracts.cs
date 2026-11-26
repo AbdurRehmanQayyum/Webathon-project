@@ -45,6 +45,21 @@ public sealed record ClubDto
     public required IReadOnlyList<UserSummaryDto> Moderators { get; init; }
 }
 
+public sealed record ClubMemberDto
+{
+    public required int Id { get; init; }
+    public required string FullName { get; init; }
+    public required string Username { get; init; }
+    public int? AvatarFileId { get; init; }
+    // Only for people who may manage user accounts
+    public string? Email { get; init; }
+    public string? RegistrationNumber { get; init; }
+    public byte? Semester { get; init; }
+    public required bool IsModerator { get; init; }
+    public required bool IsActive { get; init; }
+    public required DateTime JoinedAtUtc { get; init; }
+}
+
 public sealed class SaveClubRequestValidator : AbstractValidator<SaveClubRequest>
 {
     public SaveClubRequestValidator()

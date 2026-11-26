@@ -12,6 +12,7 @@ import { Modal } from '@/components/ui/Modal'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { Tabs } from '@/components/ui/Tabs'
+import { MembersDialog } from '@/features/administration/MembersDialog'
 import { useCurrentUser } from '@/features/auth/current-user'
 import { permissions } from '@/features/auth/permissions'
 import { ImageUploader } from '@/features/files/ImageUploader'
@@ -37,6 +38,8 @@ function ClubView({ club }: { club: Club }) {
   const { isAdmin, can } = useCurrentUser()
   const { get, set } = useListParams()
   const [isEditingImages, setEditingImages] = useState(false)
+  const [isListingMembers, setListingMembers] = useState(false)
+  const canSeeMembers = can(permissions.manageClubs) || can(permissions.assignModerators)
   const tab = get('tab') || 'discussion'
   const canPost =
     club.status === 'Active' && (club.isMember || isAdmin) && can(permissions.createPosts)
@@ -57,7 +60,19 @@ function ClubView({ club }: { club: Club }) {
           <div className="min-w-0 flex-1">
             <h1 className="wrap-text text-xl font-semibold sm:text-2xl">{club.name}</h1>
             <p className="mt-0.5 text-sm text-muted">
-              {club.category.name} · {pluralize(club.memberCount, 'member')} ·{' '}
+              {club.category.name} ·{' '}
+              {canSeeMembers ? (
+                <button
+                  type="button"
+                  onClick={() => setListingMembers(true)}
+                  className="rounded font-medium text-link underline underline-offset-2"
+                >
+                  {pluralize(club.memberCount, 'member')}
+                </button>
+              ) : (
+                pluralize(club.memberCount, 'member')
+              )}{' '}
+              ·{' '}
               {pluralize(club.postCount, 'post')}
             </p>
             <p className="wrap-text mt-2 text-sm">{club.description}</p>
@@ -104,6 +119,11 @@ function ClubView({ club }: { club: Club }) {
           { value: 'discussion', label: 'Discussion', content: <ClubFeed club={club} /> },
           { value: 'about', label: 'About', content: <ClubAbout club={club} /> },
         ]}
+      />
+
+      <MembersDialog
+        club={canSeeMembers && isListingMembers ? club : null}
+        onClose={() => setListingMembers(false)}
       />
 
       <Modal

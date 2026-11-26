@@ -18,6 +18,8 @@ public interface IClubManagementService
     Task SetStatusAsync(int clubId, SetClubStatusRequest request, CancellationToken cancellationToken);
     Task AssignModeratorAsync(int clubId, int userId, CancellationToken cancellationToken);
     Task RemoveModeratorAsync(int clubId, int userId, CancellationToken cancellationToken);
+    Task<PagedResult<ClubMemberDto>> ListMembersAsync(
+        int clubId, PageQuery query, CancellationToken cancellationToken);
 }
 
 public sealed class ClubManagementService(
@@ -39,6 +41,45 @@ public sealed class ClubManagementService(
         return clubs.ApplyFilters(query)
             .ToDto(currentUser.Id, currentUser.IsAdmin)
             .ToPagedResultAsync(query, cancellationToken);
+    }
+
+    public async Task<PagedResult<ClubMemberDto>> ListMembersAsync(
+        int clubId, PageQuery query, CancellationToken cancellationToken)
+    {
+        if (!await db.Clubs.AnyAsync(c => c.Id == clubId, cancellationToken))
+        {
+            throw new NotFoundException("Club");
+        }
+
+        var showEmail = currentUser.IsAdmin || currentUser.Has(PermissionKeys.ManageUsers);
+        var members = db.ClubMembers.AsNoTracking().Where(m => m.ClubId == clubId);
+
+        if (query.Search is { } search)
+        {
+            members = members.Where(m => m.User.FullName.Contains(search)
+                || m.User.Username.Contains(search)
+                || (m.User.RegistrationNumber != null && m.User.RegistrationNumber.Contains(search)));
+        }
+
+        return await members
+            .OrderBy(m => m.User.FullName)
+            .ThenBy(m => m.UserId)
+            .ToPagedResultAsync(
+                query,
+                page => page.Select(m => new ClubMemberDto
+                {
+                    Id = m.UserId,
+                    FullName = m.User.FullName,
+                    Username = m.User.Username,
+                    AvatarFileId = m.User.AvatarFileId,
+                    Email = showEmail ? m.User.Email : null,
+                    RegistrationNumber = m.User.RegistrationNumber,
+                    Semester = m.User.Semester,
+                    IsModerator = m.Club.ClubModerators.Any(x => x.UserId == m.UserId),
+                    IsActive = m.User.IsActive,
+                    JoinedAtUtc = m.JoinedAtUtc
+                }),
+                cancellationToken);
     }
 
     public async Task<ClubDto> CreateAsync(SaveClubRequest request, CancellationToken cancellationToken)

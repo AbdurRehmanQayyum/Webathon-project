@@ -108,6 +108,25 @@ public sealed class ClubGovernanceTests(CampusConnectApp app)
     }
 
     [Fact]
+    public async Task Admins_can_see_who_joined_a_club_and_students_cannot()
+    {
+        var admin = await ApiSession.LoginAsync(app, "admin");
+        var club = await NewClubAsync(admin);
+        var student = await ApiSession.RegisterStudentAsync(app);
+        await student.PostAsync($"/api/clubs/{club.Id}/membership");
+        var path = $"/api/admin/clubs/{club.Id}/members";
+
+        var members = await admin.GetAsync<PagedResult<ClubMemberDto>>(
+            $"{path}?search={student.User.Username}");
+
+        var member = Assert.Single(members.Items);
+        Assert.Equal(student.User.Id, member.Id);
+        Assert.False(member.IsModerator);
+        Assert.NotNull(member.Email);
+        Assert.Equal(HttpStatusCode.Forbidden, (await student.RawGetAsync(path)).StatusCode);
+    }
+
+    [Fact]
     public async Task Archived_clubs_are_read_only()
     {
         var admin = await ApiSession.LoginAsync(app, "admin");
