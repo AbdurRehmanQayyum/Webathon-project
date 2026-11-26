@@ -6,16 +6,17 @@ import { SearchInput } from '@/components/ui/SearchInput'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { Select } from '@/components/ui/Select'
 import { useCurrentUser } from '@/features/auth/current-user'
+import { permissions } from '@/features/auth/permissions'
 import { useClubs } from '@/features/clubs/api'
 import { PostList } from '@/features/posts/PostList'
 import { useListParams } from '@/hooks/useListParams'
 import { ContextSidebar } from './ContextSidebar'
 
 export function HomePage() {
-  const { user } = useCurrentUser()
+  const { user, can } = useCurrentUser()
   const { get, set } = useListParams()
   const scope = get('scope') === 'all' ? 'all' : 'joined'
-  const sort = get('sort') === 'Popular' ? 'Popular' : 'Recent'
+  const sort = (['Popular', 'ForYou'] as const).find((value) => value === get('sort')) ?? 'Recent'
   const club = get('club') || 'any'
   const search = get('q')
   const onSearch = useCallback((q: string) => set({ q }), [set])
@@ -23,15 +24,17 @@ export function HomePage() {
   const hasFilters = search !== '' || club !== 'any'
 
   return (
-    <div className="grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_19rem]">
-      <div className="mx-auto w-full max-w-3xl">
+    <div className="stagger-in grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_21rem]">
+      <div className="min-w-0">
         <PageHeader
-          title={`Hello, ${user.fullName.replace(/^Dr\.\s+/, '').split(' ')[0]}`}
+          title={`Welcome back, ${user.fullName}`}
           description="The latest from your department community."
           actions={
-            <ButtonLink to="/posts/new" variant="primary" icon={<PenLine className="size-4" />}>
-              Create post
-            </ButtonLink>
+            can(permissions.createPosts) && (
+              <ButtonLink to="/posts/new" variant="primary" icon={<PenLine className="size-4" />}>
+                Create post
+              </ButtonLink>
+            )
           }
         />
         <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -51,6 +54,7 @@ export function HomePage() {
             segments={[
               { value: 'Recent', label: 'Recent' },
               { value: 'Popular', label: 'Popular' },
+              { value: 'ForYou', label: 'For you' },
             ]}
           />
         </div>

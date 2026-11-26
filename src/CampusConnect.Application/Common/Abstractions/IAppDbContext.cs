@@ -14,11 +14,14 @@ public interface IAppDbContext
     DbSet<ClubModerator> ClubModerators { get; }
     DbSet<ClubRequest> ClubRequests { get; }
     DbSet<Comment> Comments { get; }
+    DbSet<CommentVote> CommentVotes { get; }
     DbSet<Event> Events { get; }
     DbSet<Notification> Notifications { get; }
     DbSet<Post> Posts { get; }
     DbSet<PostVote> PostVotes { get; }
     DbSet<Role> Roles { get; }
+    DbSet<RolePermission> RolePermissions { get; }
+    DbSet<Tag> Tags { get; }
     DbSet<User> Users { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

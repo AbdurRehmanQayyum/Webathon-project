@@ -57,18 +57,18 @@ public sealed class DiscussionTests(CampusConnectApp app)
         var replyId = await author.CreateAsync(
             $"/api/posts/{postId}/comments", new CreateCommentRequest("A reply", commentId));
 
-        var comments = await author.GetAsync<List<CommentDto>>($"/api/posts/{postId}/comments");
-        Assert.Equal(commentId, comments.Single(c => c.Id == replyId).ParentCommentId);
+        var comments = await author.GetAsync<PagedResult<CommentDto>>($"/api/posts/{postId}/comments");
+        Assert.Equal(commentId, comments.Items.Single(c => c.Id == replyId).ParentCommentId);
         var notifications = await replier.GetAsync<NotificationFeedDto>("/api/notifications");
-        Assert.Contains(notifications.Items, n => n.Type == NotificationType.ReplyToComment);
+        Assert.Contains(notifications.Page.Items, n => n.Type == NotificationType.ReplyToComment);
 
         await author.PutAsync(
             $"/api/comments/{commentId}", new UpdateCommentRequest("Hijacked"), HttpStatusCode.Forbidden);
         await replier.PutAsync($"/api/comments/{commentId}", new UpdateCommentRequest("Edited"));
         await replier.DeleteAsync($"/api/comments/{commentId}");
 
-        var afterDelete = await author.GetAsync<List<CommentDto>>($"/api/posts/{postId}/comments");
-        Assert.Null(afterDelete.Single(c => c.Id == commentId).Body);
+        var afterDelete = await author.GetAsync<PagedResult<CommentDto>>($"/api/posts/{postId}/comments");
+        Assert.Null(afterDelete.Items.Single(c => c.Id == commentId).Body);
     }
 
     [Fact]

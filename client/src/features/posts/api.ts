@@ -86,6 +86,7 @@ export interface NewPost {
   title: string
   body: string | null
   linkUrl: string | null
+  tags: string[]
 }
 
 export function useCreatePost() {
@@ -99,7 +100,7 @@ export function useCreatePost() {
 export function useUpdatePost(postId: number) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (post: Pick<NewPost, 'title' | 'body' | 'linkUrl'>) =>
+    mutationFn: (post: Pick<NewPost, 'title' | 'body' | 'linkUrl' | 'tags'>) =>
       api.put(`/api/posts/${postId}`, post),
     onSuccess: () => refreshDiscussions(queryClient),
   })

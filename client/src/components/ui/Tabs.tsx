@@ -1,5 +1,6 @@
+import { motion } from 'motion/react'
 import { Tabs as Primitive } from 'radix-ui'
-import type { ReactNode } from 'react'
+import { useId, type ReactNode } from 'react'
 
 interface TabItem {
   value: string
@@ -15,6 +16,8 @@ interface TabsProps {
 }
 
 export function Tabs({ label, value, onChange, items }: TabsProps) {
+  const indicatorId = useId()
+
   return (
     <Primitive.Root value={value} onValueChange={onChange}>
       <Primitive.List
@@ -25,14 +28,22 @@ export function Tabs({ label, value, onChange, items }: TabsProps) {
           <Primitive.Trigger
             key={item.value}
             value={item.value}
-            className="-mb-px border-b-2 border-transparent px-3 py-2.5 text-sm font-medium whitespace-nowrap text-muted transition-colors hover:text-fg data-[state=active]:border-primary data-[state=active]:text-fg"
+            className="relative px-3 py-2.5 text-sm font-medium whitespace-nowrap text-muted transition-colors hover:text-fg data-[state=active]:text-fg"
           >
             {item.label}
+            {item.value === value && (
+              <motion.span
+                layoutId={indicatorId}
+                layoutDependency={value}
+                className="absolute inset-x-0 bottom-0 h-0.5 bg-primary"
+                transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+              />
+            )}
           </Primitive.Trigger>
         ))}
       </Primitive.List>
       {items.map((item) => (
-        <Primitive.Content key={item.value} value={item.value} className="animate-fade-in">
+        <Primitive.Content key={item.value} value={item.value} className="animate-rise-in">
           {item.content}
         </Primitive.Content>
       ))}

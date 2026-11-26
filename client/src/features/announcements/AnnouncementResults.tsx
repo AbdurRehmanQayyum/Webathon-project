@@ -1,4 +1,6 @@
+import { useLocation } from 'react-router'
 import type { UseQueryResult } from '@tanstack/react-query'
+import { Masonry } from '@/components/common/Masonry'
 import { QueryState } from '@/components/common/QueryState'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { Pagination } from '@/components/ui/Pagination'
@@ -12,9 +14,12 @@ interface AnnouncementResultsProps {
 }
 
 export function AnnouncementResults({ query, onPage }: AnnouncementResultsProps) {
+  const { search } = useLocation()
+
   return (
     <QueryState
       query={query}
+      view={search}
       isEmpty={(data) => data.items.length === 0}
       empty={
         <EmptyState
@@ -25,11 +30,11 @@ export function AnnouncementResults({ query, onPage }: AnnouncementResultsProps)
     >
       {(data) => (
         <>
-          <div className="grid gap-3">
+          <Masonry columns="xl:grid-cols-2">
             {data.items.map((announcement) => (
               <AnnouncementCard key={announcement.id} announcement={announcement} />
             ))}
-          </div>
+          </Masonry>
           <Pagination page={data.pageNumber} totalPages={data.totalPages} onChange={onPage} />
         </>
       )}

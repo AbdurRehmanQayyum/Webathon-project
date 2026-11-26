@@ -25,6 +25,8 @@ public sealed class GlobalExceptionHandler(
             // Unique constraint violations from concurrent requests
             DbUpdateException { InnerException: SqlException { Number: 2601 or 2627 } } =>
                 (StatusCodes.Status409Conflict, "That record already exists."),
+            BadHttpRequestException { StatusCode: StatusCodes.Status413PayloadTooLarge } =>
+                (StatusCodes.Status413PayloadTooLarge, "That upload is larger than the server accepts."),
             BadHttpRequestException badRequest => (badRequest.StatusCode, "The request could not be processed."),
             _ => (StatusCodes.Status500InternalServerError, "Something went wrong on our side.")
         };

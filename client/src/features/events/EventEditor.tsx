@@ -31,7 +31,7 @@ export function EventEditor({ open, ...props }: EditorProps & { open: boolean })
       onClose={props.onClose}
       title={props.event ? 'Edit event' : 'New event'}
       description="Times are shown in your local time zone."
-      wide
+      size="wide"
     >
       <EventForm {...props} />
     </Modal>

@@ -1,10 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/services/api-client'
 
+export type FileKind = 'Image' | 'Document' | 'Audio' | 'Video'
+
+export interface FileType {
+  extension: string
+  kind: FileKind
+  maxSize: number
+}
+
 export interface FilePolicy {
-  maxFileSize: number
-  allowedExtensions: string[]
-  imageExtensions: string[]
+  types: FileType[]
+  maxAttachments: number
   quotaBytes: number
   usedBytes: number
 }

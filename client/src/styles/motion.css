@@ -5,22 +5,56 @@
   }
 }
 
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* Only a starting state, so no transform is left behind once finished */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+}
+
 @keyframes pop-in {
   from {
     opacity: 0;
-    transform: translateY(-4px) scale(0.98);
+    transform: translateY(-4px) scale(0.97);
+  }
+}
+
+@keyframes pop-out {
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
   }
 }
 
 @keyframes sheet-up {
   from {
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(32px);
+  }
+}
+
+@keyframes sheet-down {
+  to {
+    opacity: 0;
+    transform: translateY(32px);
   }
 }
 
 @keyframes slide-from-left {
   from {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes slide-to-left {
+  to {
     transform: translateX(-100%);
   }
 }
@@ -32,23 +66,108 @@
 }
 
 @utility animate-fade-in {
-  animation: fade-in 150ms ease-out;
+  animation: fade-in 200ms ease-out;
+}
+
+@utility animate-fade-out {
+  animation: fade-out 160ms ease-in forwards;
+}
+
+@utility animate-rise-in {
+  animation: rise-in 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+@utility animate-appear-late {
+  animation: fade-in 240ms ease-out 140ms backwards;
 }
 
 @utility animate-pop-in {
-  animation: pop-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: pop-in 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@utility animate-pop-out {
+  animation: pop-out 140ms ease-in forwards;
 }
 
 @utility animate-sheet-up {
-  animation: sheet-up 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: sheet-up 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@utility animate-sheet-down {
+  animation: sheet-down 200ms ease-in forwards;
 }
 
 @utility animate-drawer {
-  animation: slide-from-left 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: slide-from-left 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@utility animate-drawer-out {
+  animation: slide-to-left 220ms ease-in forwards;
 }
 
 @utility animate-shimmer {
   animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* Sections of a page settle in one after another */
+.stagger-in > * {
+  animation: rise-in 380ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.stagger-in > :nth-child(2) {
+  animation-delay: 50ms;
+}
+
+.stagger-in > :nth-child(3) {
+  animation-delay: 100ms;
+}
+
+.stagger-in > :nth-child(4) {
+  animation-delay: 150ms;
+}
+
+.stagger-in > :nth-child(5) {
+  animation-delay: 200ms;
+}
+
+.stagger-in > :nth-child(n + 6) {
+  animation-delay: 240ms;
+}
+
+/* Page changes: the content fades across while the navigation holds still */
+.page-content {
+  view-transition-name: page;
+}
+
+.app-header {
+  view-transition-name: app-header;
+}
+
+.app-sidebar {
+  view-transition-name: app-sidebar;
+}
+
+.app-tabbar {
+  view-transition-name: app-tabbar;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 260ms;
+}
+
+html:not([data-theming])::view-transition-group(page) {
+  animation: none;
+}
+
+html:not([data-theming])::view-transition-old(page) {
+  animation: fade-out 160ms ease-in both;
+  mix-blend-mode: normal;
+}
+
+html:not([data-theming])::view-transition-new(page) {
+  animation: rise-in 360ms cubic-bezier(0.22, 1, 0.36, 1) 90ms both;
+  mix-blend-mode: normal;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -56,8 +175,15 @@
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }

@@ -4,5 +4,6 @@ namespace CampusConnect.Application.Common.Abstractions;
 public interface ILiveUpdates
 {
     void NotificationsChanged(int userId);
+    void NotificationsChangedForEveryone();
     void CommentsChanged(int postId);
 }

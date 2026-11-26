@@ -6,7 +6,8 @@ import { BrandLoader } from '@/components/feedback/BrandLoader'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { AccessDeniedPage, NotFoundPage } from '@/features/auth/StatusPages'
 import { HomePage } from '@/features/feed/HomePage'
-import { GuestOnly, RequireAuth, RequireRole } from './guards'
+import { GuestOnly, Landing, RequireAuth, RequireModerator } from './guards'
+import { enablePageTransitions } from './page-transitions'
 import { RouteError } from './RouteError'
 
 // Pages beyond sign-in and the feed load on demand
@@ -36,10 +37,17 @@ const adminRoutes = [
     path: 'events',
     ...page(() => import('@/features/administration/EventsAdminPage'), 'EventsAdminPage'),
   },
+  {
+    path: 'permissions',
+    ...page(
+      () => import('@/features/administration/PermissionsAdminPage'),
+      'PermissionsAdminPage',
+    ),
+  },
 ]
 
 const memberRoutes = [
-  { index: true, element: <HomePage /> },
+  { path: 'feed', element: <HomePage /> },
   { path: 'clubs', ...page(() => import('@/features/clubs/ClubsPage'), 'ClubsPage') },
   {
     path: 'clubs/requests',
@@ -75,12 +83,16 @@ const memberRoutes = [
     ...page(() => import('@/features/events/EventDetailPage'), 'EventDetailPage'),
   },
   { path: 'bookmarks', ...page(() => import('@/features/posts/BookmarksPage'), 'BookmarksPage') },
+  {
+    path: 'notifications',
+    ...page(() => import('@/features/notifications/NotificationsPage'), 'NotificationsPage'),
+  },
   { path: 'search', ...page(() => import('@/features/search/SearchPage'), 'SearchPage') },
   { path: 'profile', ...page(() => import('@/features/profile/ProfilePage'), 'ProfilePage') },
   { path: 'users/:userId', ...page(() => import('@/features/profile/ProfilePage'), 'ProfilePage') },
   { path: 'settings', ...page(() => import('@/features/profile/SettingsPage'), 'SettingsPage') },
   {
-    element: <RequireRole roles={['Admin', 'Moderator']} />,
+    element: <RequireModerator />,
     children: [
       {
         path: 'moderation',
@@ -88,15 +100,11 @@ const memberRoutes = [
       },
     ],
   },
+  // The layout only renders the sections the account is permitted to use
   {
-    element: <RequireRole roles={['Admin']} />,
-    children: [
-      {
-        path: 'admin',
-        ...page(() => import('@/features/administration/AdminLayout'), 'AdminLayout'),
-        children: adminRoutes,
-      },
-    ],
+    path: 'admin',
+    ...page(() => import('@/features/administration/AdminLayout'), 'AdminLayout'),
+    children: adminRoutes,
   },
   { path: 'access-denied', element: <AccessDeniedPage /> },
   { path: '*', element: <NotFoundPage /> },
@@ -107,6 +115,7 @@ export const router = createBrowserRouter([
     errorElement: <RouteError />,
     hydrateFallbackElement: <BrandLoader fullScreen label="Loading Campus Connect" />,
     children: [
+      { path: '/', element: <Landing /> },
       {
         element: <GuestOnly />,
         children: [
@@ -126,3 +135,5 @@ export const router = createBrowserRouter([
     ],
   },
 ])
+
+enablePageTransitions(router)

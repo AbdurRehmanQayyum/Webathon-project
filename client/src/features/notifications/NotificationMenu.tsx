@@ -1,25 +1,25 @@
 import { Bell, CheckCheck } from 'lucide-react'
 import { Popover } from 'radix-ui'
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { QueryState } from '@/components/common/QueryState'
 import { ListSkeleton } from '@/components/feedback/Skeleton'
 import { Button } from '@/components/ui/Button'
 import { buttonStyles } from '@/components/ui/button-styles'
 import { popupStyles } from '@/components/ui/input-styles'
 import { cn } from '@/lib/cn'
-import { formatRelative } from '@/lib/format'
-import { useMarkRead, useNotifications, type Notification } from './api'
+import { useNotificationActions, useNotifications, type Notification } from './api'
+import { NotificationItem } from './NotificationItem'
 
 export function NotificationMenu() {
   const [isOpen, setOpen] = useState(false)
-  const notifications = useNotifications()
-  const markRead = useMarkRead()
+  const notifications = useNotifications({ pageSize: 6 })
+  const actions = useNotificationActions()
   const navigate = useNavigate()
   const unread = notifications.data?.unreadCount ?? 0
 
   const open = (notification: Notification) => {
-    if (!notification.isRead) markRead.one.mutate(notification.id)
+    if (!notification.isRead) actions.read.mutate(notification.id)
     setOpen(false)
     void navigate(notification.linkPath)
   }
@@ -42,7 +42,7 @@ export function NotificationMenu() {
           align="end"
           sideOffset={6}
           collisionPadding={8}
-          className={cn(popupStyles, 'flex max-h-[70dvh] w-[min(22rem,calc(100vw-1rem))] flex-col')}
+          className={cn(popupStyles, 'flex max-h-[70dvh] w-[min(24rem,calc(100vw-1rem))] flex-col')}
         >
           <div className="flex items-center justify-between border-b border-line px-3 py-2">
             <h2 className="text-sm font-semibold">Notifications</h2>
@@ -51,7 +51,7 @@ export function NotificationMenu() {
               variant="ghost"
               icon={<CheckCheck className="size-4" />}
               disabled={unread === 0}
-              onClick={() => markRead.all.mutate()}
+              onClick={() => actions.readAll.mutate()}
             >
               Mark all read
             </Button>
@@ -60,46 +60,27 @@ export function NotificationMenu() {
             <QueryState
               query={notifications}
               skeleton={<ListSkeleton rows={2} />}
-              isEmpty={(data) => data.items.length === 0}
+              isEmpty={(data) => data.page.items.length === 0}
               empty={<p className="p-6 text-center text-sm text-muted">You are all caught up.</p>}
             >
               {(data) => (
                 <ul>
-                  {data.items.map((notification) => (
+                  {data.page.items.map((notification) => (
                     <li key={notification.id}>
-                      <button
-                        type="button"
-                        onClick={() => open(notification)}
-                        className="flex w-full gap-2.5 rounded-md px-2.5 py-2 text-left hover:bg-surface-alt"
-                      >
-                        <span
-                          className={cn(
-                            'mt-1.5 size-2 shrink-0 rounded-full',
-                            notification.isRead ? 'bg-transparent' : 'bg-primary',
-                          )}
-                          aria-hidden="true"
-                        />
-                        <span className="min-w-0">
-                          <span
-                            className={cn(
-                              'wrap-text block text-sm',
-                              !notification.isRead && 'font-medium',
-                            )}
-                          >
-                            {!notification.isRead && <span className="sr-only">Unread: </span>}
-                            {notification.message}
-                          </span>
-                          <span className="text-xs text-muted">
-                            {formatRelative(notification.createdAtUtc)}
-                          </span>
-                        </span>
-                      </button>
+                      <NotificationItem notification={notification} onOpen={open} />
                     </li>
                   ))}
                 </ul>
               )}
             </QueryState>
           </div>
+          <Link
+            to="/notifications"
+            onClick={() => setOpen(false)}
+            className="border-t border-line px-3 py-2.5 text-center text-sm font-medium text-link hover:bg-surface-alt"
+          >
+            View all notifications
+          </Link>
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>

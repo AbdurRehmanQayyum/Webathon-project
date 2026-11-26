@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { formatBytes } from '@/lib/format'
 import { uploadFile } from '@/services/api-client'
-import { useFilePolicy, useRefreshFiles, type FilePolicy } from './api'
+import { useFilePolicy, useRefreshFiles, type FilePolicy, type FileType } from './api'
 
 export interface UploadItem {
   id: string
@@ -20,11 +20,14 @@ interface UploaderOptions {
   uploadPath?: string
 }
 
-function validate(file: File, policy: FilePolicy, allowed: string[]) {
+function validate(file: File, policy: FilePolicy, types: FileType[]) {
   const extension = `.${file.name.split('.').pop()?.toLowerCase() ?? ''}`
-  if (!allowed.includes(extension)) return 'This file type is not allowed.'
+  const type = types.find((candidate) => candidate.extension === extension)
+  if (!type) return 'This file type is not allowed.'
   if (file.size === 0) return 'The file is empty.'
-  if (file.size > policy.maxFileSize) return `Larger than ${formatBytes(policy.maxFileSize)}.`
+  if (file.size > type.maxSize) {
+    return `The ${type.kind.toLowerCase()} limit is ${formatBytes(type.maxSize)}.`
+  }
   if (policy.usedBytes + file.size > policy.quotaBytes) return 'Not enough storage left.'
   return null
 }
@@ -42,7 +45,7 @@ export function useFileUploader({
   const controllers = useRef(new Map<string, AbortController>())
   const previews = useRef(new Set<string>())
 
-  const allowed = (imagesOnly ? policy.data?.imageExtensions : policy.data?.allowedExtensions) ?? []
+  const types = (policy.data?.types ?? []).filter((type) => !imagesOnly || type.kind === 'Image')
 
   useEffect(() => {
     const activeUploads = controllers.current
@@ -103,7 +106,7 @@ export function useFileUploader({
     setNotice(files.length > room ? `You can attach up to ${maxFiles} files.` : null)
 
     const added = files.slice(0, Math.max(room, 0)).map((file): UploadItem => {
-      const error = validate(file, policy.data, allowed)
+      const error = validate(file, policy.data, types)
       const previewUrl = URL.createObjectURL(file)
       previews.current.add(previewUrl)
       return {
@@ -145,8 +148,7 @@ export function useFileUploader({
     isReady: policy.data !== undefined,
     isFull: maxFiles > 1 && existingCount + items.length >= maxFiles,
     maxFiles,
-    maxFileSize: policy.data?.maxFileSize ?? 0,
-    allowed,
+    types,
   }
 }
 

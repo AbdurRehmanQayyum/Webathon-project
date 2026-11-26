@@ -2,11 +2,12 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
+import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { Alert } from '@/components/feedback/Alert'
 import { useToast } from '@/components/feedback/toast-context'
 import { FormField } from '@/components/forms/FormField'
 import { Button } from '@/components/ui/Button'
-import { Input, Textarea } from '@/components/ui/Input'
+import { Input } from '@/components/ui/Input'
 import { Modal, ModalActions } from '@/components/ui/Modal'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { Switch } from '@/components/ui/Switch'
@@ -20,7 +21,7 @@ import type { Announcement } from './types'
 
 const announcementSchema = z.object({
   title: z.string().trim().min(5, 'Use at least 5 characters.').max(200),
-  body: z.string().trim().min(10, 'Write at least 10 characters.').max(20000),
+  body: z.string().min(1, 'Write the announcement.').max(60000, 'This message is too long.'),
   linkUrl: z.union([z.literal(''), webUrlSchema]),
   linkLabel: z.string().max(100),
   priority: z.enum(['Normal', 'Important']),
@@ -40,7 +41,7 @@ export function AnnouncementEditor({ open, ...props }: EditorProps & { open: boo
       open={open}
       onClose={props.onClose}
       title={props.announcement ? 'Edit announcement' : 'New announcement'}
-      wide
+      size="wide"
     >
       <AnnouncementForm {...props} />
     </Modal>
@@ -93,7 +94,21 @@ function AnnouncementForm({ announcement, onClose }: EditorProps) {
         {(field) => <Input {...field} {...register('title')} maxLength={200} />}
       </FormField>
       <FormField label="Message" error={errors.body?.message}>
-        {(field) => <Textarea {...field} {...register('body')} rows={6} />}
+        {(field) => (
+          <Controller
+            control={control}
+            name="body"
+            render={({ field: input }) => (
+              <RichTextEditor
+                {...field}
+                label="Message"
+                value={input.value}
+                onChange={input.onChange}
+                maxLength={20000}
+              />
+            )}
+          />
+        )}
       </FormField>
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField label="Link" optional error={errors.linkUrl?.message}>

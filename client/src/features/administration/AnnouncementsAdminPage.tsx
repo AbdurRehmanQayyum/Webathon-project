@@ -1,6 +1,6 @@
 import { Eye, EyeOff, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useCallback, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { PageHeader } from '@/components/common/PageHeader'
 import { QueryState } from '@/components/common/QueryState'
 import { EmptyState } from '@/components/feedback/EmptyState'
@@ -22,6 +22,7 @@ type Publication = 'All' | 'Published' | 'Draft'
 type Dialog = { type: 'create' } | { type: 'edit' | 'delete'; id: number }
 
 export function AnnouncementsAdminPage() {
+  const location = useLocation()
   const { page, get, set } = useListParams()
   const publication = (['Published', 'Draft'].find((value) => value === get('show')) ??
     'All') as Publication
@@ -72,6 +73,7 @@ export function AnnouncementsAdminPage() {
       </div>
       <QueryState
         query={announcements}
+        view={location.search}
         isEmpty={(data) => data.items.length === 0}
         empty={<EmptyState title="No announcements" description="Create the first notice." />}
       >

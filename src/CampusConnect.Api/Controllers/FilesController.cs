@@ -12,16 +12,23 @@ public sealed class FilesController(IFileService files) : ApiController
 
     [HttpGet("{fileId:int}")]
     [Produces("application/octet-stream")]
-    public async Task<IActionResult> Download(int fileId, CancellationToken cancellationToken)
+    public async Task<IActionResult> Download(
+        int fileId, [FromQuery] bool download, CancellationToken cancellationToken)
     {
-        var file = await files.DownloadAsync(fileId, cancellationToken);
+        var file = await files.DownloadAsync(fileId, download, cancellationToken);
 
         // Profile and club images may be cached briefly; attachments never
         Response.Headers.CacheControl = file.IsCommunityImage ? "private, max-age=60" : "private, no-store";
 
-        return file.RedirectUrl is { } url
-            ? Redirect(url.AbsoluteUri)
-            : File(file.Content!, file.ContentType, file.FileName);
+        if (file.RedirectUrl is { } url)
+        {
+            return Redirect(url.AbsoluteUri);
+        }
+
+        // Range requests let audio and video seek
+        return file.Inline
+            ? File(file.Content!, file.ContentType, enableRangeProcessing: true)
+            : File(file.Content!, file.ContentType, file.FileName, enableRangeProcessing: true);
     }
 
     [HttpDelete("{fileId:int}")]

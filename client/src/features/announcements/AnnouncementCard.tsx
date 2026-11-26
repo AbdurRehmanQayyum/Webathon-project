@@ -42,7 +42,7 @@ export function AnnouncementCard({ announcement }: { announcement: Announcement 
           {announcement.title}
         </Link>
       </h2>
-      <p className="wrap-text line-clamp-2 text-sm text-muted">{announcement.body}</p>
+      <p className="wrap-text line-clamp-2 text-sm text-muted">{announcement.excerpt}</p>
       <p className="flex flex-wrap items-center gap-x-3 text-xs text-muted">
         <span>
           {announcement.author.fullName}

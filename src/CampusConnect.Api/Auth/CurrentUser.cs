@@ -13,4 +13,7 @@ public sealed class CurrentUser(IHttpContextAccessor accessor) : ICurrentUser
             : throw new AuthenticationFailedException("Sign in to continue.");
 
     public bool IsAdmin => accessor.HttpContext?.User.IsInRole(RoleNames.Admin) ?? false;
+
+    public bool Has(string permission) =>
+        IsAdmin || (accessor.HttpContext?.User.HasClaim(SessionPrincipal.PermissionClaim, permission) ?? false);
 }

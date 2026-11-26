@@ -56,3 +56,24 @@ and toggles; all visual styling is original. Icons come from Lucide.
 - Desktop: collapsible sidebar, top bar, content; the feed adds a context column from 1280px.
 - Below 1024px: compact header, bottom navigation and a slide-over drawer. Tables become stacked
   records; dialogs become bottom sheets; the calendar shows markers with an agenda.
+
+## Layout notes
+
+- Pages use the full width. Cards of unequal height are packed with `Masonry`, which keeps reading
+  order.
+- Sign-in and registration are centred; registration is split into steps.
+- Scrollbars follow the theme (`styles/scrollbar.css`); `no-scrollbar` is for swipeable tab strips.
+- Time fields use a clock dial that works with pointer, touch and keyboard.
+
+## Motion
+
+| Change | Treatment |
+| --- | --- |
+| Between pages | View Transitions cross-fade of the content; navigation stays still. Fade-in fallback elsewhere |
+| Tabs, filters, sorting, paging | `Reveal` replays when the new data arrives; old results dim meanwhile |
+| Loading | Skeletons appear only if a response takes longer than 140 ms |
+| Page sections | `stagger-in` |
+| Dialogs, drawers, menus, tooltips | Animate in and out |
+| Theme switch | Screen cross-fade |
+
+Reduced-motion preferences turn these off.

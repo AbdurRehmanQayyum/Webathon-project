@@ -1,5 +1,7 @@
+import { useLocation } from 'react-router'
 import { Check, X } from 'lucide-react'
 import { useCallback, useState } from 'react'
+import { Masonry } from '@/components/common/Masonry'
 import { PageHeader } from '@/components/common/PageHeader'
 import { QueryState } from '@/components/common/QueryState'
 import { EmptyState } from '@/components/feedback/EmptyState'
@@ -17,6 +19,7 @@ import { useAdminRequests, useRequestActions } from './api'
 type Filter = 'Pending' | 'Approved' | 'Rejected' | 'All'
 
 export function RequestsAdminPage() {
+  const location = useLocation()
   const { page, get, set } = useListParams()
   const filter = (['Approved', 'Rejected', 'All'].find((value) => value === get('status')) ??
     'Pending') as Filter
@@ -46,7 +49,7 @@ export function RequestsAdminPage() {
   }
 
   return (
-    <div className="max-w-3xl">
+    <>
       <PageHeader title="Club requests" description="Approving a request creates the club." />
       <div className="mb-4 flex flex-wrap gap-2">
         <SegmentedControl
@@ -68,6 +71,7 @@ export function RequestsAdminPage() {
       </div>
       <QueryState
         query={requests}
+        view={location.search}
         isEmpty={(data) => data.items.length === 0}
         empty={
           <EmptyState title="Nothing to review" description="No requests match this filter." />
@@ -75,7 +79,7 @@ export function RequestsAdminPage() {
       >
         {(data) => (
           <>
-            <div className="grid gap-3">
+            <Masonry columns="xl:grid-cols-2">
               {data.items.map((request) => (
                 <ClubRequestCard
                   key={request.id}
@@ -104,7 +108,7 @@ export function RequestsAdminPage() {
                   }
                 />
               ))}
-            </div>
+            </Masonry>
             <Pagination
               page={data.pageNumber}
               totalPages={data.totalPages}
@@ -128,6 +132,6 @@ export function RequestsAdminPage() {
         loading={actions.approve.isPending || actions.reject.isPending}
         onConfirm={decide}
       />
-    </div>
+    </>
   )
 }

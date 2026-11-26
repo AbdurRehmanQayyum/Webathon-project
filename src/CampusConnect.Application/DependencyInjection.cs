@@ -1,3 +1,4 @@
+using CampusConnect.Application.Common.Content;
 using CampusConnect.Application.Features.Administration;
 using CampusConnect.Application.Features.Announcements;
 using CampusConnect.Application.Features.Auth;
@@ -8,7 +9,9 @@ using CampusConnect.Application.Features.Events;
 using CampusConnect.Application.Features.Files;
 using CampusConnect.Application.Features.Moderation;
 using CampusConnect.Application.Features.Notifications;
+using CampusConnect.Application.Features.Permissions;
 using CampusConnect.Application.Features.Posts;
+using CampusConnect.Application.Features.Recommendations;
 using CampusConnect.Application.Features.Users;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,6 +43,9 @@ public static class DependencyInjection
         services.AddScoped<IEventService, EventService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IOverviewService, OverviewService>();
+        services.AddScoped<ContentProcessor>();
+        services.AddScoped<IPermissionService, PermissionService>();
+        services.AddScoped<IRecommendationService, RecommendationService>();
 
         return services;
     }

@@ -1,10 +1,10 @@
 import { Link } from 'react-router'
 import { BrandMark } from './BrandMark'
 
-export function Logo({ compact = false }: { compact?: boolean }) {
+export function Logo({ compact = false, to = '/feed' }: { compact?: boolean; to?: string }) {
   return (
     <Link
-      to="/"
+      to={to}
       className="brand-link inline-flex items-center gap-2.5 rounded-control"
       aria-label="Campus Connect home"
     >

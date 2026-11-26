@@ -1,14 +1,15 @@
-import { ExternalLink as ExternalIcon, MessageSquare, Paperclip, Pin } from 'lucide-react'
+import { ExternalLink as ExternalIcon, MessageSquare, Pin } from 'lucide-react'
 import { Link } from 'react-router'
 import { ExternalLink } from '@/components/common/ExternalLink'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import { ClubIcon } from '@/features/clubs/ClubIcon'
+import { AttachmentGallery } from '@/features/files/AttachmentGallery'
 import { formatDateTime, formatRelative, pluralize } from '@/lib/format'
-import { fileUrl } from '@/services/api-client'
 import { BookmarkButton } from './BookmarkButton'
 import { PostActions } from './PostActions'
+import { TagList } from './TagList'
 import type { Post } from './types'
 import { VoteControl } from './VoteControl'
 
@@ -57,35 +58,20 @@ export function LinkPreview({ url }: { url: string }) {
 }
 
 export function PostCard({ post }: { post: Post }) {
-  const image = post.attachments.find((file) => file.contentType.startsWith('image/'))
-
   return (
-    <Card className="grid gap-2.5 p-4 transition-colors hover:border-line-strong">
+    <Card className="grid min-w-0 content-start gap-2.5 p-4 transition-colors hover:border-line-strong">
       <PostMeta post={post} />
-      <div className="flex items-start gap-3">
-        <div className="grid min-w-0 flex-1 gap-2">
-          <h2 className="text-base font-semibold">
-            <Link to={`/posts/${post.id}`} className="wrap-text rounded hover:text-link">
-              {post.title}
-            </Link>
-          </h2>
-          {post.body && (
-            <p className="wrap-text line-clamp-3 text-sm whitespace-pre-line text-muted">
-              {post.body}
-              {post.isBodyTruncated && '…'}
-            </p>
-          )}
-          {post.linkUrl && <LinkPreview url={post.linkUrl} />}
-        </div>
-        {image && (
-          <img
-            src={fileUrl(image.id)}
-            alt=""
-            loading="lazy"
-            className="size-20 shrink-0 rounded-control bg-surface-alt object-cover sm:size-24"
-          />
-        )}
+      <div className="grid min-w-0 gap-2">
+        <h2 className="text-base font-semibold">
+          <Link to={`/posts/${post.id}`} className="wrap-text rounded hover:text-link">
+            {post.title}
+          </Link>
+        </h2>
+        {post.excerpt && <p className="wrap-text line-clamp-3 text-sm text-muted">{post.excerpt}</p>}
+        {post.linkUrl && <LinkPreview url={post.linkUrl} />}
+        <TagList tags={post.tags} />
       </div>
+      <AttachmentGallery attachments={post.attachments} compact />
       <div className="flex items-center gap-1.5">
         <VoteControl post={post} />
         <Link
@@ -99,13 +85,6 @@ export function PostCard({ post }: { post: Post }) {
             <span className="sr-only"> comments</span>
           </span>
         </Link>
-        {post.attachments.length > 0 && (
-          <span className="inline-flex items-center gap-1 px-1 text-sm text-muted">
-            <Paperclip className="size-4" aria-hidden="true" />
-            {post.attachments.length}
-            <span className="sr-only"> attachments</span>
-          </span>
-        )}
         <div className="ml-auto flex items-center">
           <BookmarkButton post={post} />
           <PostActions post={post} />

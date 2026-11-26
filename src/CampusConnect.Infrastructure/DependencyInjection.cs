@@ -35,6 +35,9 @@ public static class DependencyInjection
         services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<CampusConnectDbContext>());
 
         services.AddSingleton<IPasswordService, PasswordService>();
+        services.Configure<EncryptionOptions>(configuration.GetSection(EncryptionOptions.SectionName));
+        services.AddSingleton<IFieldCipher, AesFieldCipher>();
+        services.AddScoped<LegacyDataUpgrader>();
         services.AddObjectStorage(configuration);
 
         services.Configure<SeedOptions>(configuration.GetSection(SeedOptions.SectionName));

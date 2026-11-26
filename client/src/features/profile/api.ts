@@ -6,6 +6,7 @@ import type { ClubReference } from '@/types/common'
 export interface Profile {
   id: number
   fullName: string
+  username: string
   avatarFileId: number | null
   semester: number | null
   title: string | null
@@ -26,11 +27,15 @@ export const useProfile = (userId: number) =>
 export function useUpdateProfile() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (values: { fullName: string; semester: number | null; bio: string | null }) =>
-      api.put('/api/users/me', values),
+    mutationFn: (values: {
+      fullName: string
+      semester: number | null
+      bio: string | null
+      interestIds: number[]
+    }) => api.put('/api/users/me', values),
     onSuccess: () =>
       Promise.all(
-        ['session', 'users', 'posts', 'comments'].map((key) =>
+        ['session', 'users', 'posts', 'comments', 'clubs'].map((key) =>
           queryClient.invalidateQueries({ queryKey: [key] }),
         ),
       ),

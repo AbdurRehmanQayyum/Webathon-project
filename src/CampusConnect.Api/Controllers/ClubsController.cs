@@ -1,5 +1,6 @@
 using CampusConnect.Application.Common.Models;
 using CampusConnect.Application.Features.Clubs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CampusConnect.Api.Controllers;
@@ -7,6 +8,8 @@ namespace CampusConnect.Api.Controllers;
 [Route("api/clubs")]
 public sealed class ClubsController(IClubService clubs) : ApiController
 {
+    // Anonymous so registration can offer interests
+    [AllowAnonymous]
     [HttpGet("categories")]
     public async Task<ActionResult<IReadOnlyList<ClubCategoryDto>>> Categories(
         CancellationToken cancellationToken) =>

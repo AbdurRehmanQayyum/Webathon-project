@@ -10,7 +10,7 @@ import { useChangePassword } from '@/features/auth/api'
 import { changePasswordSchema, type ChangePasswordValues } from '@/features/auth/schemas'
 import { applyServerErrors } from '@/lib/form-errors'
 
-export function PasswordForm() {
+export function PasswordForm({ onChanged }: { onChanged?: () => void }) {
   const changePassword = useChangePassword()
   const toast = useToast()
   const [formError, setFormError] = useState<string | null>(null)
@@ -28,6 +28,7 @@ export function PasswordForm() {
         onSuccess: () => {
           reset()
           toast.success('Password changed')
+          onChanged?.()
         },
         onError: (error) =>
           setFormError(applyServerErrors(error, setError, ['currentPassword', 'newPassword'])),

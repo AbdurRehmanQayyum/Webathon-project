@@ -6,8 +6,9 @@ export interface Post {
   id: number
   type: PostType
   title: string
+  // Sanitised markup, returned for a single post only
   body: string | null
-  isBodyTruncated: boolean
+  excerpt: string | null
   linkUrl: string | null
   status: ContentStatus
   isPinned: boolean
@@ -20,9 +21,12 @@ export interface Post {
   myVote: number
   commentCount: number
   isBookmarked: boolean
+  tags: string[]
   attachments: Attachment[]
   canEdit: boolean
   canDelete: boolean
   canModerate: boolean
+  canPin: boolean
   canComment: boolean
+  canReact: boolean
 }

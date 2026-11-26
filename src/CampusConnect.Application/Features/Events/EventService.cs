@@ -1,6 +1,7 @@
 using CampusConnect.Application.Common.Abstractions;
 using CampusConnect.Application.Common.Exceptions;
 using CampusConnect.Application.Common.Models;
+using CampusConnect.Application.Features.Notifications;
 using CampusConnect.Domain.Entities;
 using CampusConnect.Domain.Enums;
 using FluentValidation;
@@ -88,6 +89,7 @@ public interface IEventService
 public sealed class EventService(
     IAppDbContext db,
     ICurrentUser currentUser,
+    INotificationService notifications,
     TimeProvider clock,
     ILogger<EventService> logger) : IEventService
 {
@@ -153,6 +155,11 @@ public sealed class EventService(
         db.Events.Add(departmentEvent);
         await db.SaveChangesAsync(cancellationToken);
         logger.LogInformation("Event {EventId} created", departmentEvent.Id);
+        await notifications.BroadcastAsync(
+            NotificationType.EventScheduled,
+            $"New event: {departmentEvent.Title}",
+            $"/events/{departmentEvent.Id}",
+            cancellationToken);
         return departmentEvent.Id;
     }
 
@@ -171,6 +178,11 @@ public sealed class EventService(
         departmentEvent.CancellationReason = request.Reason.Trim();
         await db.SaveChangesAsync(cancellationToken);
         logger.LogInformation("Event {EventId} cancelled", id);
+        await notifications.BroadcastAsync(
+            NotificationType.EventCancelled,
+            $"Cancelled: {departmentEvent.Title}",
+            $"/events/{id}",
+            cancellationToken);
     }
 
     private async Task<Event> FindScheduledAsync(int id, CancellationToken cancellationToken)

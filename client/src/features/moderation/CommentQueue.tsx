@@ -1,6 +1,6 @@
 import { RotateCcw, ShieldX } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { QueryState } from '@/components/common/QueryState'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { useToast } from '@/components/feedback/toast-context'
@@ -21,9 +21,11 @@ export function CommentQueue({ clubId, filters }: { clubId: number; filters: Que
   const toast = useToast()
   const [removingId, setRemovingId] = useState<number | null>(null)
 
+  const { search } = useLocation()
   return (
     <QueryState
       query={comments}
+      view={search}
       isEmpty={(data) => data.items.length === 0}
       empty={<EmptyState title="No comments match" description="Adjust the filters to see more." />}
     >

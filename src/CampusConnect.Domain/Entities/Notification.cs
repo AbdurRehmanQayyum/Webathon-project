@@ -19,5 +19,9 @@ public partial class Notification
 
     public DateTime CreatedAtUtc { get; set; }
 
+    public int? ActorUserId { get; set; }
+
+    public virtual User? ActorUser { get; set; }
+
     public virtual User RecipientUser { get; set; } = null!;
 }

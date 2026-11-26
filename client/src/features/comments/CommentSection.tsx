@@ -4,15 +4,27 @@ import { QueryState } from '@/components/common/QueryState'
 import { Alert } from '@/components/feedback/Alert'
 import { ListSkeleton } from '@/components/feedback/Skeleton'
 import { useToast } from '@/components/feedback/toast-context'
+import { Button } from '@/components/ui/Button'
+import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import type { Post } from '@/features/posts/types'
+import { useListParams } from '@/hooks/useListParams'
 import { watchPost } from '@/services/live'
 import { useCommentActions, useComments } from './api'
 import { CommentForm } from './CommentForm'
 import { CommentItem } from './CommentItem'
 import { buildCommentTree } from './tree'
+import type { CommentSort } from './types'
+
+const sorts: { value: CommentSort; label: string }[] = [
+  { value: 'Recent', label: 'Recent' },
+  { value: 'Popular', label: 'Popular' },
+  { value: 'Oldest', label: 'Oldest' },
+]
 
 export function CommentSection({ post }: { post: Post }) {
-  const comments = useComments(post.id)
+  const { get, set } = useListParams()
+  const sort = sorts.find((option) => option.value === get('comments'))?.value ?? 'Recent'
+  const comments = useComments(post.id, sort)
   const actions = useCommentActions(post.id)
   const toast = useToast()
 
@@ -21,9 +33,17 @@ export function CommentSection({ post }: { post: Post }) {
 
   return (
     <section aria-labelledby="comments-heading" className="mt-6">
-      <h2 id="comments-heading" className="mb-3 text-base font-semibold">
-        Discussion
-      </h2>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h2 id="comments-heading" className="text-base font-semibold">
+          Discussion
+        </h2>
+        <SegmentedControl
+          label="Sort comments"
+          value={sort}
+          onChange={(value) => set({ comments: value === 'Recent' ? null : value })}
+          segments={sorts}
+        />
+      </div>
       {post.canComment ? (
         <CommentForm
           label="Add a comment"
@@ -49,13 +69,18 @@ export function CommentSection({ post }: { post: Post }) {
       <div className="mt-5">
         <QueryState
           query={comments}
+          view={sort}
           skeleton={<ListSkeleton rows={2} />}
-          isEmpty={(data) => buildCommentTree(data).length === 0}
-          empty={<p className="py-6 text-center text-sm text-muted">No comments yet.</p>}
+          isEmpty={(data) => buildCommentTree(data.pages.flatMap((page) => page.items)).length === 0}
+          empty={
+            <p className="py-6 text-center text-sm text-muted">
+              No comments yet. Start the discussion.
+            </p>
+          }
         >
           {(data) => (
             <ul className="grid gap-5">
-              {buildCommentTree(data).map((comment) => (
+              {buildCommentTree(data.pages.flatMap((page) => page.items)).map((comment) => (
                 <CommentItem
                   key={comment.id}
                   comment={comment}
@@ -67,6 +92,16 @@ export function CommentSection({ post }: { post: Post }) {
             </ul>
           )}
         </QueryState>
+        {comments.hasNextPage && (
+          <div className="mt-5 flex justify-center">
+            <Button
+              loading={comments.isFetchingNextPage}
+              onClick={() => void comments.fetchNextPage()}
+            >
+              Load more comments
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   )

@@ -9,18 +9,25 @@ namespace CampusConnect.Application.Features.Users;
 public interface IUserService
 {
     Task<ProfileDto> GetProfileAsync(int userId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<UserHandleDto>> SearchHandlesAsync(string? search, CancellationToken cancellationToken);
     Task UpdateProfileAsync(UpdateProfileRequest request, CancellationToken cancellationToken);
 }
 
 public sealed class UserService(IAppDbContext db, ICurrentUser currentUser) : IUserService
 {
-    public async Task<ProfileDto> GetProfileAsync(int userId, CancellationToken cancellationToken) =>
-        await db.Users.AsNoTracking()
-            .Where(u => u.Id == userId && (u.IsActive || currentUser.IsAdmin))
+    private const int HandleResults = 8;
+
+    public async Task<ProfileDto> GetProfileAsync(int userId, CancellationToken cancellationToken)
+    {
+        var includeInactive = currentUser.IsAdmin;
+
+        return await db.Users.AsNoTracking()
+            .Where(u => u.Id == userId && (u.IsActive || includeInactive))
             .Select(u => new ProfileDto
             {
                 Id = u.Id,
                 FullName = u.FullName,
+                Username = u.Username,
                 AvatarFileId = u.AvatarFileId,
                 Semester = u.Semester,
                 Title = u.Title,
@@ -37,14 +44,39 @@ public sealed class UserService(IAppDbContext db, ICurrentUser currentUser) : IU
                 CommentCount = u.CommentAuthors.Count(c => c.Status == (byte)ContentStatus.Published)
             })
             .SingleOrDefaultAsync(cancellationToken)
-        ?? throw new NotFoundException("User");
+            ?? throw new NotFoundException("User");
+    }
+
+    // Mention suggestions
+    public async Task<IReadOnlyList<UserHandleDto>> SearchHandlesAsync(
+        string? search, CancellationToken cancellationToken)
+    {
+        var users = db.Users.AsNoTracking().Where(u => u.IsActive);
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            users = users.Where(u => u.Username.StartsWith(term) || u.FullName.Contains(term));
+        }
+
+        return await users
+            .OrderBy(u => u.Username)
+            .Take(HandleResults)
+            .Select(u => new UserHandleDto(u.Id, u.Username, u.FullName, u.AvatarFileId))
+            .ToListAsync(cancellationToken);
+    }
 
     public async Task UpdateProfileAsync(UpdateProfileRequest request, CancellationToken cancellationToken)
     {
-        var user = await db.Users.SingleAsync(u => u.Id == currentUser.Id, cancellationToken);
+        var user = await db.Users.Include(u => u.Categories)
+            .SingleAsync(u => u.Id == currentUser.Id, cancellationToken);
         user.FullName = request.FullName.Trim();
         user.Semester = request.Semester;
         user.Bio = string.IsNullOrWhiteSpace(request.Bio) ? null : request.Bio.Trim();
+        if (request.InterestIds is not null)
+        {
+            await Accounts.SetInterestsAsync(db, user, request.InterestIds, cancellationToken);
+        }
+
         await db.SaveChangesAsync(cancellationToken);
     }
 }

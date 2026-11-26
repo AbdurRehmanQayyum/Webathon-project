@@ -1,15 +1,17 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router'
 import { Breadcrumb, PageHeader } from '@/components/common/PageHeader'
 import { QueryState } from '@/components/common/QueryState'
+import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { Alert } from '@/components/feedback/Alert'
 import { useToast } from '@/components/feedback/toast-context'
 import { FormField } from '@/components/forms/FormField'
+import { TagInput } from '@/components/forms/TagInput'
 import { Button, ButtonLink } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Input, Textarea } from '@/components/ui/Input'
+import { Input } from '@/components/ui/Input'
 import { AccessDeniedPage } from '@/features/auth/StatusPages'
 import { AttachmentManager } from '@/features/files/AttachmentManager'
 import { applyServerErrors } from '@/lib/form-errors'
@@ -33,13 +35,14 @@ function EditPostForm({ post }: { post: Post }) {
   const toast = useToast()
   const updatePost = useUpdatePost(post.id)
   const [formError, setFormError] = useState<string | null>(null)
-  const { register, handleSubmit, setError, formState } = useForm<PostValues>({
+  const { register, control, handleSubmit, setError, formState } = useForm<PostValues>({
     resolver: zodResolver(postSchema),
     defaultValues: {
       clubId: String(post.club.id),
       type: post.type,
       title: post.title,
       body: post.body ?? '',
+      tags: post.tags,
       linkUrl: post.linkUrl ?? '',
     },
   })
@@ -50,8 +53,9 @@ function EditPostForm({ post }: { post: Post }) {
     updatePost.mutate(
       {
         title: values.title,
-        body: values.body.trim() || null,
+        body: values.body || null,
         linkUrl: post.type === 'Link' ? values.linkUrl.trim() : null,
+        tags: values.tags,
       },
       {
         onSuccess: () => {
@@ -59,13 +63,13 @@ function EditPostForm({ post }: { post: Post }) {
           void navigate(`/posts/${post.id}`)
         },
         onError: (error) =>
-          setFormError(applyServerErrors(error, setError, ['title', 'body', 'linkUrl'])),
+          setFormError(applyServerErrors(error, setError, ['title', 'body', 'linkUrl', 'tags'])),
       },
     )
   })
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <>
       <Breadcrumb items={[{ label: post.title, to: `/posts/${post.id}` }, { label: 'Edit' }]} />
       <PageHeader title="Edit post" description={post.club.name} />
       <Card className="p-4 sm:p-6">
@@ -84,7 +88,32 @@ function EditPostForm({ post }: { post: Post }) {
             optional={post.type === 'Link'}
             error={errors.body?.message}
           >
-            {(field) => <Textarea {...field} {...register('body')} rows={8} />}
+            {(field) => (
+              <Controller
+                control={control}
+                name="body"
+                render={({ field: input }) => (
+                  <RichTextEditor
+                    {...field}
+                    label={post.type === 'Text' ? 'Body' : 'Description'}
+                    value={input.value}
+                    onChange={input.onChange}
+                    maxLength={20000}
+                  />
+                )}
+              />
+            )}
+          </FormField>
+          <FormField label="Tags" optional error={errors.tags?.message}>
+            {(field) => (
+              <Controller
+                control={control}
+                name="tags"
+                render={({ field: input }) => (
+                  <TagInput {...field} value={input.value} onChange={input.onChange} />
+                )}
+              />
+            )}
           </FormField>
           <div className="flex justify-end gap-2">
             <ButtonLink to={`/posts/${post.id}`}>Cancel</ButtonLink>
@@ -101,6 +130,6 @@ function EditPostForm({ post }: { post: Post }) {
           uploadPath={`/api/posts/${post.id}/attachments`}
         />
       </section>
-    </div>
+    </>
   )
 }

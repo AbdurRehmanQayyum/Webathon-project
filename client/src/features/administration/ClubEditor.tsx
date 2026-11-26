@@ -22,7 +22,7 @@ interface ClubEditorProps {
 
 export function ClubEditor({ open, ...props }: ClubEditorProps & { open: boolean }) {
   return (
-    <Modal open={open} onClose={props.onClose} title={props.club ? 'Edit club' : 'New club'} wide>
+    <Modal open={open} onClose={props.onClose} title={props.club ? 'Edit club' : 'New club'} size="wide">
       <ClubForm {...props} />
     </Modal>
   )

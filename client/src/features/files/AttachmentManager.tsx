@@ -1,9 +1,9 @@
 import type { Attachment } from '@/types/common'
-import { AttachmentList } from './AttachmentList'
+import { AttachmentGallery } from './AttachmentGallery'
 import { FileUploader } from './FileUploader'
 import { useFileUploader } from './useFileUploader'
 
-export const MAX_ATTACHMENTS = 4
+export const MAX_ATTACHMENTS = 6
 
 // Existing files plus immediate uploads for a saved record
 export function AttachmentManager({
@@ -21,8 +21,8 @@ export function AttachmentManager({
 
   return (
     <div className="grid gap-3">
-      <AttachmentList attachments={attachments} removable />
-      <FileUploader uploader={uploader} label="Add attachments" />
+      <AttachmentGallery attachments={attachments} removable />
+      <FileUploader uploader={uploader} label="Add images, video, audio or documents" />
     </div>
   )
 }

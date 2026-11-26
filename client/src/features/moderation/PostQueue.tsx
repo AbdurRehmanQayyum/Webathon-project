@@ -1,6 +1,6 @@
 import { Pin, PinOff, RotateCcw, ShieldX } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { QueryState } from '@/components/common/QueryState'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { useToast } from '@/components/feedback/toast-context'
@@ -26,9 +26,11 @@ export function PostQueue({ clubId, filters }: { clubId: number; filters: QueryP
     onError: toast.error,
   })
 
+  const { search } = useLocation()
   return (
     <QueryState
       query={posts}
+      view={search}
       isEmpty={(data) => data.items.length === 0}
       empty={<EmptyState title="No posts match" description="Adjust the filters to see more." />}
     >

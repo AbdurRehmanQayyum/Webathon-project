@@ -1,9 +1,11 @@
 using CampusConnect.Application.Common.Abstractions;
+using CampusConnect.Application.Common.Content;
 using CampusConnect.Application.Common.Exceptions;
 using CampusConnect.Application.Common.Models;
 using CampusConnect.Application.Features.Clubs;
 using CampusConnect.Application.Features.Notifications;
 using CampusConnect.Application.Features.Posts;
+using CampusConnect.Domain.Constants;
 using CampusConnect.Domain.Entities;
 using CampusConnect.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -33,6 +35,7 @@ public sealed class ModerationService(
     ILogger<ModerationService> logger) : IModerationService
 {
     private const int MaxPinnedPerClub = 3;
+    private const int CommentPreviewLength = 200;
 
     public async Task<IReadOnlyList<ModeratedClubDto>> GetClubsAsync(CancellationToken cancellationToken)
     {
@@ -60,7 +63,7 @@ public sealed class ModerationService(
     public async Task<PagedResult<PostDto>> GetPostsAsync(
         int clubId, ModerationQuery query, CancellationToken cancellationToken)
     {
-        await clubAccess.EnsureCanModerateAsync(clubId, cancellationToken);
+        await EnsureAssignedAsync(clubId, cancellationToken);
 
         var posts = db.Posts.AsNoTracking()
             .Where(p => p.ClubId == clubId && p.Status != (byte)ContentStatus.Deleted);
@@ -79,14 +82,13 @@ public sealed class ModerationService(
             .OrderByDescending(p => p.IsPinned)
             .ThenByDescending(p => p.CreatedAtUtc)
             .ThenByDescending(p => p.Id)
-            .ToDto(currentUser.Id, currentUser.IsAdmin)
-            .ToPagedResultAsync(query, cancellationToken);
+            .ToPagedResultAsync(query, page => page.ToDto(currentUser), cancellationToken);
     }
 
     public async Task<PagedResult<ModerationCommentDto>> GetCommentsAsync(
         int clubId, ModerationQuery query, CancellationToken cancellationToken)
     {
-        await clubAccess.EnsureCanModerateAsync(clubId, cancellationToken);
+        await EnsureAssignedAsync(clubId, cancellationToken);
 
         var comments = db.Comments.AsNoTracking()
             .Where(c => c.Post.ClubId == clubId
@@ -100,29 +102,31 @@ public sealed class ModerationService(
 
         if (query.Search is { } search)
         {
-            comments = comments.Where(c => c.Body.Contains(search) || c.Author.FullName.Contains(search));
+            comments = comments.Where(c => c.Post.Title.Contains(search) || c.Author.FullName.Contains(search));
         }
 
         return await comments
             .OrderByDescending(c => c.CreatedAtUtc)
             .ThenByDescending(c => c.Id)
-            .Select(c => new ModerationCommentDto
-            {
-                Id = c.Id,
-                PostId = c.PostId,
-                PostTitle = c.Post.Title,
-                Body = c.Body,
-                Status = (ContentStatus)c.Status,
-                Author = new UserSummaryDto(
-                    c.AuthorId, c.Author.FullName, c.Author.Title, c.Author.AvatarFileId),
-                CreatedAtUtc = c.CreatedAtUtc
-            })
-            .ToPagedResultAsync(query, cancellationToken);
+            .ToPagedResultAsync(
+                query,
+                page => page.Select(c => new ModerationCommentDto
+                {
+                    Id = c.Id,
+                    PostId = c.PostId,
+                    PostTitle = c.Post.Title,
+                    Body = RichText.Preview(c.Body, CommentPreviewLength)!,
+                    Status = (ContentStatus)c.Status,
+                    Author = new UserSummaryDto(
+                        c.AuthorId, c.Author.FullName, c.Author.Title, c.Author.AvatarFileId),
+                    CreatedAtUtc = c.CreatedAtUtc
+                }),
+                cancellationToken);
     }
 
     public async Task SetPinnedAsync(int postId, SetPinnedRequest request, CancellationToken cancellationToken)
     {
-        var post = await FindModeratedPostAsync(postId, cancellationToken);
+        var post = await FindModeratedPostAsync(postId, PermissionKeys.PinPosts, cancellationToken);
 
         if (request.IsPinned)
         {
@@ -146,7 +150,7 @@ public sealed class ModerationService(
     public async Task RemovePostAsync(
         int postId, RemoveContentRequest request, CancellationToken cancellationToken)
     {
-        var post = await FindModeratedPostAsync(postId, cancellationToken);
+        var post = await FindModeratedPostAsync(postId, PermissionKeys.ModeratePosts, cancellationToken);
         EnsureStatus(post.Status, ContentStatus.Published, "This post is already removed.");
 
         post.Status = (byte)ContentStatus.Removed;
@@ -164,7 +168,7 @@ public sealed class ModerationService(
 
     public async Task RestorePostAsync(int postId, CancellationToken cancellationToken)
     {
-        var post = await FindModeratedPostAsync(postId, cancellationToken);
+        var post = await FindModeratedPostAsync(postId, PermissionKeys.ModeratePosts, cancellationToken);
         EnsureStatus(post.Status, ContentStatus.Removed, "Only removed posts can be restored.");
 
         post.Status = (byte)ContentStatus.Published;
@@ -201,13 +205,22 @@ public sealed class ModerationService(
         liveUpdates.CommentsChanged(comment.PostId);
     }
 
-    private async Task<Post> FindModeratedPostAsync(int postId, CancellationToken cancellationToken)
+    private async Task EnsureAssignedAsync(int clubId, CancellationToken cancellationToken)
+    {
+        if (!await clubAccess.CanModerateAsync(clubId, cancellationToken))
+        {
+            throw new ForbiddenException("You can only moderate clubs you are assigned to.");
+        }
+    }
+
+    private async Task<Post> FindModeratedPostAsync(
+        int postId, string permission, CancellationToken cancellationToken)
     {
         var post = await db.Posts.SingleOrDefaultAsync(
             p => p.Id == postId && p.Status != (byte)ContentStatus.Deleted, cancellationToken)
             ?? throw new NotFoundException("Post");
 
-        await clubAccess.EnsureCanModerateAsync(post.ClubId, cancellationToken);
+        await clubAccess.EnsureCanModerateAsync(post.ClubId, permission, cancellationToken);
         return post;
     }
 
@@ -219,7 +232,8 @@ public sealed class ModerationService(
             .SingleOrDefaultAsync(cancellationToken)
             ?? throw new NotFoundException("Comment");
 
-        await clubAccess.EnsureCanModerateAsync(match.ClubId, cancellationToken);
+        await clubAccess.EnsureCanModerateAsync(
+            match.ClubId, PermissionKeys.ModerateComments, cancellationToken);
         return match.Comment;
     }
 

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import type { Club } from '@/features/clubs/types'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
-import { useAdminUsers, useClubAdminActions } from './api'
+import { useClubAdminActions, useUserSearch } from './api'
 
 export function ModeratorsDialog({ club, onClose }: { club: Club | null; onClose: () => void }) {
   return (
@@ -25,13 +25,13 @@ export function ModeratorsDialog({ club, onClose }: { club: Club | null; onClose
 function ModeratorManager({ club }: { club: Club }) {
   const [query, setQuery] = useState('')
   const search = useDebouncedValue(query.trim())
-  const users = useAdminUsers({ search, isActive: true, pageSize: 8 }, search.length > 0)
+  const users = useUserSearch(search)
   const { assignModerator, removeModerator } = useClubAdminActions()
   const toast = useToast()
 
-  const options = (users.data?.items ?? [])
+  const options = (users.data ?? [])
     .filter((user) => !club.moderators.some((moderator) => moderator.id === user.id))
-    .map((user) => ({ id: user.id, label: user.fullName, detail: user.email }))
+    .map((user) => ({ id: user.id, label: user.fullName, detail: `@${user.username}` }))
 
   return (
     <div className="grid min-h-64 content-start gap-4">

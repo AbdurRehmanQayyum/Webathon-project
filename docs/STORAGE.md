@@ -20,6 +20,10 @@ presigned URL.
 
 ## Cloudflare R2
 
+You need four values: the **account ID** (for the endpoint), the **bucket name**, an **access key ID**
+and a **secret access key**. In production put them in `appsettings.Production.json` (see
+[DEPLOYMENT.md](DEPLOYMENT.md)).
+
 1. Create a **private** bucket (do not enable public access).
 2. Create an API token with object read and write permission for that bucket.
 3. Configure with user secrets or environment variables. Never commit these values.
@@ -61,12 +65,17 @@ and a warning is logged.
 | --- | --- |
 | `Storage:Region` | `auto` |
 | `Storage:PresignedUrlExpirationMinutes` | 5 |
-| `Storage:MaxFileSize` | 5 MB (hard database limit 10 MB) |
-| `Storage:UserQuota` | 100 MB per uploader |
-| `Storage:AllowedFileTypes` | `.png .jpg .jpeg .gif .webp .pdf .docx .pptx .xlsx .txt` |
+| `Storage:MaxImageSize` | 5 MB |
+| `Storage:MaxDocumentSize` | 10 MB |
+| `Storage:MaxAudioSize` | 20 MB |
+| `Storage:MaxVideoSize` | 50 MB |
+| `Storage:UserQuota` | 500 MB per uploader |
+| `Storage:AllowedFileTypes` | images, `.mp4 .webm .mp3 .wav .ogg .m4a .pdf .docx .pptx .xlsx .txt` |
 
-Removing entries from `AllowedFileTypes` narrows uploads. Adding a type the server has no signature
-check for has no effect, so executables and SVG cannot be enabled by configuration.
+The database caps any file at 100 MB. Removing entries from `AllowedFileTypes` narrows uploads.
+Adding a type the server has no signature check for has no effect, so executables and SVG cannot be
+enabled by configuration. Images, video, audio, PDF and text preview in the app; Office files
+download.
 
 ## Object keys
 
@@ -93,7 +102,7 @@ events/{eventId}/attachments/{guid}
 
 - Extension, declared MIME type and file signature must agree. Office files are opened and checked;
   macro projects are rejected.
-- Posts, announcements and events accept up to 4 files each.
+- Posts, announcements and events accept up to 6 files each.
 - Uploads go through the API (no direct-to-bucket upload) and are rate limited.
 - If saving metadata fails, the uploaded object is deleted. Replacing an image deletes the old object.
   A failed object deletion is logged.
@@ -107,6 +116,10 @@ objects with the same keys before switching, or start with an empty file set.
 ## Verification status
 
 Local upload, replacement, download, deletion, authorization, quota and metadata persistence are
-covered by integration tests. The S3 provider is tested offline for provider selection, authorized
-redirect and presigned URL shape. **It has not been run against a live R2 bucket**; upload and delete
-there should be verified once credentials are available.
+covered by integration tests.
+
+The S3 provider was checked by hand on 26 November 2026 against a live Cloudflare R2 bucket with a
+production build: image, audio, text, PDF and video uploads; authorized redirect to a signed URL;
+identical bytes on download; range requests; inline and attachment responses; refusal of unsigned
+and anonymous requests; deletion from the bucket; and image, audio and text previews in the browser
+under the production Content Security Policy. Keep the bucket's public development URL disabled.

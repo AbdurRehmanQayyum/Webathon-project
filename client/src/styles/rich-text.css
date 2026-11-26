@@ -1,0 +1,71 @@
+/* Shared by the editor and published content */
+.rich-content > * + * {
+  margin-top: 0.6em;
+}
+
+.rich-content h2 {
+  font-size: 1.15em;
+  font-weight: 600;
+}
+
+.rich-content h3 {
+  font-weight: 600;
+}
+
+.rich-content ul {
+  list-style: disc;
+  padding-left: 1.4em;
+}
+
+.rich-content ol {
+  list-style: decimal;
+  padding-left: 1.4em;
+}
+
+.rich-content blockquote {
+  border-left: 3px solid var(--brand-secondary);
+  padding-left: 0.85em;
+  color: var(--text-muted);
+}
+
+.rich-content code {
+  background: var(--surface-alt);
+  border-radius: 0.3rem;
+  padding: 0.1em 0.35em;
+  font-size: 0.9em;
+}
+
+.rich-content pre {
+  background: var(--surface-alt);
+  border-radius: var(--radius-control);
+  padding: 0.75em 0.9em;
+  overflow-x: auto;
+}
+
+.rich-content pre code {
+  background: none;
+  padding: 0;
+}
+
+.rich-content a,
+.rich-content [data-type='mention'],
+.rich-content [data-type='hashtag'] {
+  color: var(--link);
+  text-underline-offset: 2px;
+}
+
+.rich-content a:hover {
+  text-decoration: underline;
+}
+
+.rich-content hr {
+  border-color: var(--border);
+}
+
+.rich-content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}

@@ -29,6 +29,7 @@ export const registerSchema = z
     password: passwordSchema,
     confirmPassword: z.string(),
     bio: z.string().max(500, 'Keep it under 500 characters.'),
+    interestIds: z.array(z.number()).max(8, 'Choose up to 8 interests.'),
   })
   .refine((values) => values.password === values.confirmPassword, {
     path: ['confirmPassword'],

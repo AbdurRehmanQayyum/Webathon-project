@@ -1,4 +1,5 @@
 using CampusConnect.Application.Common.Abstractions;
+using CampusConnect.Application.Features.Users;
 using CampusConnect.Domain.Constants;
 using CampusConnect.Domain.Entities;
 using CampusConnect.Infrastructure.Persistence;
@@ -51,6 +52,9 @@ public sealed class AdminBootstrapper(
         {
             FullName = settings.FullName,
             Email = settings.Email.Trim().ToLowerInvariant(),
+            Username = await Accounts.NewUsernameAsync(db, settings.Email, cancellationToken),
+            Title = "Head of Department",
+            MustChangePassword = true,
             PasswordHash = passwords.Hash(settings.Password),
             SecurityStamp = Guid.NewGuid(),
             IsActive = true

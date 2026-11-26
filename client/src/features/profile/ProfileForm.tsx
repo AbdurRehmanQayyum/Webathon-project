@@ -10,6 +10,7 @@ import { Input, Textarea } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { useCurrentUser } from '@/features/auth/current-user'
 import { fullNameSchema, semesterOptions } from '@/features/auth/schemas'
+import { InterestPicker } from '@/features/clubs/InterestPicker'
 import { applyServerErrors } from '@/lib/form-errors'
 import { useUpdateProfile } from './api'
 
@@ -17,6 +18,7 @@ const profileSchema = z.object({
   fullName: fullNameSchema,
   semester: z.string(),
   bio: z.string().max(500, 'Keep it under 500 characters.'),
+  interestIds: z.array(z.number()).max(8, 'Choose up to 8 interests.'),
 })
 
 type ProfileValues = z.infer<typeof profileSchema>
@@ -32,6 +34,7 @@ export function ProfileForm() {
       fullName: user.fullName,
       semester: user.semester ? String(user.semester) : 'none',
       bio: user.bio ?? '',
+      interestIds: user.interestIds,
     },
   })
   const { errors } = formState
@@ -43,6 +46,7 @@ export function ProfileForm() {
         fullName: values.fullName,
         semester: values.semester === 'none' ? null : Number(values.semester),
         bio: values.bio.trim() || null,
+        interestIds: values.interestIds,
       },
       {
         onSuccess: () => toast.success('Profile updated'),
@@ -82,6 +86,15 @@ export function ProfileForm() {
       <FormField label="About you" optional error={errors.bio?.message}>
         {(field) => <Textarea {...field} {...register('bio')} rows={3} />}
       </FormField>
+      <fieldset className="grid gap-2">
+        <legend className="text-sm font-medium">Interests</legend>
+        <p className="mb-1 text-xs text-muted">Used for club suggestions and your For you feed.</p>
+        <Controller
+          control={control}
+          name="interestIds"
+          render={({ field }) => <InterestPicker value={field.value} onChange={field.onChange} />}
+        />
+      </fieldset>
       <div className="flex justify-end">
         <Button type="submit" variant="primary" loading={updateProfile.isPending}>
           Save profile

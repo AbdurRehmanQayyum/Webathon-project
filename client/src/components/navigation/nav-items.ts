@@ -8,6 +8,7 @@ import {
   Wrench,
   type LucideIcon,
 } from 'lucide-react'
+import { useAdminSections } from '@/features/administration/sections'
 import { useCurrentUser } from '@/features/auth/current-user'
 
 export interface NavItem {
@@ -17,7 +18,7 @@ export interface NavItem {
 }
 
 export const primaryItems: NavItem[] = [
-  { to: '/', label: 'Home', icon: House },
+  { to: '/feed', label: 'Home', icon: House },
   { to: '/clubs', label: 'Clubs', icon: UsersRound },
   { to: '/announcements', label: 'Announcements', icon: Megaphone },
   { to: '/events', label: 'Events', icon: CalendarDays },
@@ -26,9 +27,10 @@ export const primaryItems: NavItem[] = [
 
 // Role-based navigation; the API enforces the same rules
 export function useManagementItems() {
-  const { isAdmin, canModerate } = useCurrentUser()
+  const { canModerate } = useCurrentUser()
+  const sections = useAdminSections()
   const items: NavItem[] = []
   if (canModerate) items.push({ to: '/moderation', label: 'Moderation', icon: ShieldCheck })
-  if (isAdmin) items.push({ to: '/admin', label: 'Administration', icon: Wrench })
+  if (sections.length > 0) items.push({ to: '/admin', label: 'Administration', icon: Wrench })
   return items
 }

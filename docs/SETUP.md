@@ -29,13 +29,30 @@ Environment variables work too, with `__` as the separator: `ConnectionStrings__
 | Setting | Default | Meaning |
 | --- | --- | --- |
 | `ConnectionStrings:CampusConnect` | local SQLEXPRESS (Development) | SQL Server connection |
+| `Jwt:Key` | generated in Development | Base64 session signing key (64 bytes) |
+| `Encryption:Key` | generated in Development | Base64 AES-256 key (32 bytes) for stored content |
+| `Jwt:SessionHours`, `Jwt:RememberDays` | 8, 14 | Session lifetime |
 | `Registration:AllowedEmailDomains` | empty (any) | Restrict registration, for example `["students.example.edu"]` |
 | `Seed:Enabled`, `Seed:DemoPassword` | on in Development | Demo accounts and content |
 | `AdminBootstrap:Email`, `:Password`, `:FullName` | unset | First administrator for a deployment |
-| `RateLimiting:SensitivePermitsPerMinute` | 20 | Sign-in, registration, upload and request limits |
+| `RateLimiting:RequestsPerMinute` | 600 | Overall API limit per client |
+| `RateLimiting:SensitivePermitsPerMinute` | 30 | Sign-in, registration, upload and request limits |
 | `Cors:AllowedOrigins` | empty | Only needed if the SPA is served from another origin |
-| `DataProtection:KeysPath` | platform default | Persistent folder for cookie encryption keys |
+| `DataProtection:KeysPath` | platform default | Persistent folder for CSRF protection keys |
 | `Storage:*` | local provider | See [STORAGE.md](STORAGE.md) |
+
+Development keys are written to `src/CampusConnect.Api/appsettings.Local.json` (ignored by git) on
+the first start. Create keys by hand with:
+
+```powershell
+powershell -File scripts/new-key.ps1 -Bytes 64
+```
+
+```powershell
+powershell -File scripts/new-key.ps1 -Bytes 32
+```
+
+**Keep `Encryption:Key` safe.** Content written with it cannot be read with any other key.
 
 No institutional email domain is assumed and student identity is not verified. Set
 `Registration:AllowedEmailDomains` when the department provides its domain.
@@ -87,5 +104,5 @@ npm --prefix client run build
 Integration tests build a separate `CampusConnectDB_Tests` database on `.\SQLEXPRESS` from the SQL
 scripts and never drop it. Set `CAMPUSCONNECT_TEST_CONNECTION` to use another server.
 
-To test the installable app locally, run `npm --prefix client run build` and then
-`npm --prefix client run preview` (<http://localhost:4173>).
+The app can be installed from <http://localhost:5173> in Chrome or Edge: use the install icon in the
+address bar or the **Install app** button when the browser offers it.

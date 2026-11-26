@@ -13,16 +13,16 @@ export function BookmarksPage() {
   const bookmarks = useBookmarkedPosts({ search, pageNumber: page, pageSize: 10 })
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <>
       <PageHeader title="Bookmarks" description="Posts you saved for later." />
-      <SearchInput label="Search bookmarks" value={search} onSearch={onSearch} className="mb-4" />
+      <SearchInput label="Search bookmarks" value={search} onSearch={onSearch} className="mb-4 sm:max-w-md" />
       <PostResults
         query={bookmarks}
         onPage={(next) => set({ page: next })}
         emptyTitle={search ? 'No bookmarks match' : 'Nothing saved yet'}
         emptyDescription="Use the bookmark icon on any post to keep it here."
-        emptyAction={<ButtonLink to="/">Browse the feed</ButtonLink>}
+        emptyAction={<ButtonLink to="/feed">Browse the feed</ButtonLink>}
       />
-    </div>
+    </>
   )
 }

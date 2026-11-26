@@ -6,10 +6,14 @@ SET QUOTED_IDENTIFIER ON;
 GO
 
 -- Attachments becomes the central stored-file metadata table
-IF EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = N'CK_Attachments_Owner')
-    ALTER TABLE dbo.Attachments DROP CONSTRAINT CK_Attachments_Owner;
-IF EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = N'CK_Attachments_Size')
-    ALTER TABLE dbo.Attachments DROP CONSTRAINT CK_Attachments_Size;
+-- Only the first run replaces the original constraints
+IF COL_LENGTH(N'dbo.Attachments', N'SizeBytes') IS NOT NULL
+BEGIN
+    IF EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = N'CK_Attachments_Owner')
+        ALTER TABLE dbo.Attachments DROP CONSTRAINT CK_Attachments_Owner;
+    IF EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = N'CK_Attachments_Size')
+        ALTER TABLE dbo.Attachments DROP CONSTRAINT CK_Attachments_Size;
+END
 GO
 
 IF COL_LENGTH(N'dbo.Attachments', N'SizeBytes') IS NOT NULL
@@ -53,17 +57,20 @@ IF EXISTS (SELECT 1 FROM sys.columns
     ALTER TABLE dbo.Attachments ALTER COLUMN Purpose tinyint NOT NULL;
 GO
 
-ALTER TABLE dbo.Attachments ADD CONSTRAINT CK_Attachments_Size CHECK (FileSize > 0 AND FileSize <= 10485760);
+IF NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = N'CK_Attachments_Size')
+    ALTER TABLE dbo.Attachments ADD CONSTRAINT CK_Attachments_Size
+        CHECK (FileSize > 0 AND FileSize <= 10485760);
 GO
 
 -- 1 avatar, 2 club logo, 3 club cover, 4 post, 5 announcement, 6 event
-ALTER TABLE dbo.Attachments ADD CONSTRAINT CK_Attachments_Owner CHECK
-(
-    (Purpose IN (1, 2, 3) AND PostId IS NULL AND AnnouncementId IS NULL AND EventId IS NULL)
-    OR (Purpose = 4 AND PostId IS NOT NULL AND AnnouncementId IS NULL AND EventId IS NULL)
-    OR (Purpose = 5 AND AnnouncementId IS NOT NULL AND PostId IS NULL AND EventId IS NULL)
-    OR (Purpose = 6 AND EventId IS NOT NULL AND PostId IS NULL AND AnnouncementId IS NULL)
-);
+IF NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = N'CK_Attachments_Owner')
+    ALTER TABLE dbo.Attachments ADD CONSTRAINT CK_Attachments_Owner CHECK
+    (
+        (Purpose IN (1, 2, 3) AND PostId IS NULL AND AnnouncementId IS NULL AND EventId IS NULL)
+        OR (Purpose = 4 AND PostId IS NOT NULL AND AnnouncementId IS NULL AND EventId IS NULL)
+        OR (Purpose = 5 AND AnnouncementId IS NOT NULL AND PostId IS NULL AND EventId IS NULL)
+        OR (Purpose = 6 AND EventId IS NOT NULL AND PostId IS NULL AND AnnouncementId IS NULL)
+    );
 GO
 
 IF COL_LENGTH(N'dbo.Users', N'AvatarFileId') IS NULL

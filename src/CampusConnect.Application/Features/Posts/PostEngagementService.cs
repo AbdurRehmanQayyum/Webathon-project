@@ -1,5 +1,6 @@
 using CampusConnect.Application.Common.Abstractions;
 using CampusConnect.Application.Common.Exceptions;
+using CampusConnect.Domain.Constants;
 using CampusConnect.Domain.Entities;
 using CampusConnect.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -18,10 +19,12 @@ public sealed class PostEngagementService(IAppDbContext db, ICurrentUser current
     public async Task<VoteResultDto> VoteAsync(
         int postId, VoteRequest request, CancellationToken cancellationToken)
     {
+        currentUser.Require(PermissionKeys.ReactToPosts);
         await EnsurePublishedAsync(postId, cancellationToken);
 
+        var userId = currentUser.Id;
         var vote = await db.PostVotes.SingleOrDefaultAsync(
-            v => v.PostId == postId && v.UserId == currentUser.Id, cancellationToken);
+            v => v.PostId == postId && v.UserId == userId, cancellationToken);
 
         if (request.Value == 0)
         {
@@ -32,12 +35,7 @@ public sealed class PostEngagementService(IAppDbContext db, ICurrentUser current
         }
         else if (vote is null)
         {
-            db.PostVotes.Add(new PostVote
-            {
-                PostId = postId,
-                UserId = currentUser.Id,
-                Value = (short)request.Value
-            });
+            db.PostVotes.Add(new PostVote { PostId = postId, UserId = userId, Value = (short)request.Value });
         }
         else
         {
@@ -55,7 +53,8 @@ public sealed class PostEngagementService(IAppDbContext db, ICurrentUser current
 
     public async Task SetBookmarkAsync(int postId, bool isBookmarked, CancellationToken cancellationToken)
     {
-        var mine = db.Bookmarks.Where(b => b.PostId == postId && b.UserId == currentUser.Id);
+        var userId = currentUser.Id;
+        var mine = db.Bookmarks.Where(b => b.PostId == postId && b.UserId == userId);
 
         if (!isBookmarked)
         {
@@ -66,7 +65,7 @@ public sealed class PostEngagementService(IAppDbContext db, ICurrentUser current
         await EnsurePublishedAsync(postId, cancellationToken);
         if (!await mine.AnyAsync(cancellationToken))
         {
-            db.Bookmarks.Add(new Bookmark { PostId = postId, UserId = currentUser.Id });
+            db.Bookmarks.Add(new Bookmark { PostId = postId, UserId = userId });
             await db.SaveChangesAsync(cancellationToken);
         }
     }

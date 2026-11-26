@@ -13,6 +13,7 @@ import { SearchInput } from '@/components/ui/SearchInput'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { Tabs } from '@/components/ui/Tabs'
 import { useCurrentUser } from '@/features/auth/current-user'
+import { permissions } from '@/features/auth/permissions'
 import { ImageUploader } from '@/features/files/ImageUploader'
 import { PostList } from '@/features/posts/PostList'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
@@ -33,11 +34,12 @@ export function ClubDetailPage() {
 }
 
 function ClubView({ club }: { club: Club }) {
-  const { isAdmin } = useCurrentUser()
+  const { isAdmin, can } = useCurrentUser()
   const { get, set } = useListParams()
   const [isEditingImages, setEditingImages] = useState(false)
   const tab = get('tab') || 'discussion'
-  const canPost = club.status === 'Active' && (club.isMember || isAdmin)
+  const canPost =
+    club.status === 'Active' && (club.isMember || isAdmin) && can(permissions.createPosts)
 
   return (
     <>
@@ -58,7 +60,7 @@ function ClubView({ club }: { club: Club }) {
               {club.category.name} · {pluralize(club.memberCount, 'member')} ·{' '}
               {pluralize(club.postCount, 'post')}
             </p>
-            <p className="wrap-text mt-2 max-w-2xl text-sm">{club.description}</p>
+            <p className="wrap-text mt-2 text-sm">{club.description}</p>
           </div>
           <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             <MembershipButton club={club} />
@@ -131,12 +133,12 @@ function ClubView({ club }: { club: Club }) {
 
 function ClubFeed({ club }: { club: Club }) {
   const { get, set } = useListParams()
-  const sort = get('sort') === 'Popular' ? 'Popular' : 'Recent'
+  const sort = (['Popular', 'ForYou'] as const).find((value) => value === get('sort')) ?? 'Recent'
   const search = get('q')
   const onSearch = useCallback((q: string) => set({ q }), [set])
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <>
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <SegmentedControl
           label="Sort posts"
@@ -159,13 +161,13 @@ function ClubFeed({ club }: { club: Club }) {
         emptyTitle={search ? 'No posts match' : 'No discussions yet'}
         emptyDescription={search ? 'Try different words.' : 'Start the first conversation.'}
       />
-    </div>
+    </>
   )
 }
 
 function ClubAbout({ club }: { club: Club }) {
   return (
-    <div className="grid max-w-3xl gap-6">
+    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
       <section>
         <h2 className="mb-2 text-base font-semibold">Club rules</h2>
         {club.rules ? (

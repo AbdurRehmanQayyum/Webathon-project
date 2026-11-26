@@ -1,12 +1,13 @@
-import { Ellipsis, ShieldCheck, ShieldOff, UserCheck, UserX } from 'lucide-react'
+import { Ellipsis, ShieldCheck, ShieldOff, UserCheck, UserPlus, UserX } from 'lucide-react'
 import { useCallback, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { PageHeader } from '@/components/common/PageHeader'
 import { QueryState } from '@/components/common/QueryState'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { useToast } from '@/components/feedback/toast-context'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { DataTable } from '@/components/ui/DataTable'
 import { IconButton } from '@/components/ui/IconButton'
@@ -18,9 +19,12 @@ import { useCurrentUser } from '@/features/auth/current-user'
 import { useListParams } from '@/hooks/useListParams'
 import { useAdminUsers, useUserActions, type AdminUser } from './api'
 import { AdminRoleDialog } from './AdminRoleDialog'
+import { CreateUserDialog } from './CreateUserDialog'
 
 export function UsersPage() {
-  const { user: me } = useCurrentUser()
+  const { user: me, isAdmin: isSelfAdmin } = useCurrentUser()
+  const [isCreating, setCreating] = useState(false)
+  const location = useLocation()
   const { page, get, set } = useListParams()
   const search = get('q')
   const role = get('role') || 'all'
@@ -40,7 +44,19 @@ export function UsersPage() {
 
   return (
     <>
-      <PageHeader title="Users" description="Accounts, access and administrator titles." />
+      <PageHeader
+        title="Users"
+        description="Accounts, access and administrator titles."
+        actions={
+          <Button
+            variant="primary"
+            icon={<UserPlus className="size-4" />}
+            onClick={() => setCreating(true)}
+          >
+            New user
+          </Button>
+        }
+      />
       <div className="mb-4 flex flex-wrap gap-2">
         <SearchInput
           label="Search name, email or registration number"
@@ -74,6 +90,7 @@ export function UsersPage() {
       </div>
       <QueryState
         query={users}
+        view={location.search}
         isEmpty={(data) => data.items.length === 0}
         empty={<EmptyState title="No users match" description="Adjust the search or filters." />}
       >
@@ -120,9 +137,12 @@ export function UsersPage() {
                 {
                   header: 'Status',
                   cell: (row) => (
-                    <Badge tone={row.isActive ? 'success' : 'danger'}>
-                      {row.isActive ? 'Active' : 'Deactivated'}
-                    </Badge>
+                    <span className="inline-flex flex-wrap gap-1">
+                      <Badge tone={row.isActive ? 'success' : 'danger'}>
+                        {row.isActive ? 'Active' : 'Deactivated'}
+                      </Badge>
+                      {row.mustChangePassword && <Badge tone="warning">Temporary password</Badge>}
+                    </span>
                   ),
                 },
               ]}
@@ -139,11 +159,16 @@ export function UsersPage() {
                       />
                     }
                     items={[
-                      {
-                        label: isAdmin ? 'Remove admin access' : 'Make administrator',
-                        icon: isAdmin ? ShieldOff : ShieldCheck,
-                        onSelect: () => setRoleTarget(row),
-                      },
+                      // Only administrators may change who is an administrator
+                      ...(isSelfAdmin
+                        ? [
+                            {
+                              label: isAdmin ? 'Remove admin access' : 'Make administrator',
+                              icon: isAdmin ? ShieldOff : ShieldCheck,
+                              onSelect: () => setRoleTarget(row),
+                            },
+                          ]
+                        : []),
                       {
                         label: row.isActive ? 'Deactivate account' : 'Reactivate account',
                         icon: row.isActive ? UserX : UserCheck,
@@ -190,6 +215,7 @@ export function UsersPage() {
         }}
       />
       <AdminRoleDialog user={roleTarget} onClose={() => setRoleTarget(null)} />
+      <CreateUserDialog open={isCreating} onClose={() => setCreating(false)} />
     </>
   )
 }

@@ -24,7 +24,7 @@ export function SearchPage() {
   const onSearch = useCallback((q: string) => set({ q }), [set])
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <>
       <PageHeader title="Search" description="Find posts, clubs, announcements and events." />
       <SearchInput label="Search Campus Connect" value={query} onSearch={onSearch} />
       <SegmentedControl
@@ -37,7 +37,7 @@ export function SearchPage() {
           { value: 'announcements', label: 'Notices' },
           { value: 'events', label: 'Events' },
         ]}
-        className="my-4 w-full"
+        className="my-4 w-full sm:w-120"
       />
       {!query && (
         <EmptyState
@@ -55,7 +55,7 @@ export function SearchPage() {
       {query && scope === 'clubs' && <ClubMatches search={query} />}
       {query && scope === 'announcements' && <AnnouncementMatches search={query} />}
       {query && scope === 'events' && <EventMatches search={query} />}
-    </div>
+    </>
   )
 }
 
@@ -66,12 +66,13 @@ function ClubMatches({ search }: { search: string }) {
   return (
     <QueryState
       query={clubs}
+      view={`${search}:${page}`}
       isEmpty={(data) => data.items.length === 0}
       empty={<EmptyState title="No clubs found" description="Try a different search." />}
     >
       {(data) => (
         <>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {data.items.map((club) => (
               <ClubCard key={club.id} club={club} />
             ))}

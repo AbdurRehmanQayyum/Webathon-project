@@ -23,14 +23,14 @@ function Overview({ data }: { data: AdminOverview }) {
     { label: 'Moderators', value: data.moderators, to: '/admin/clubs' },
     { label: 'Active clubs', value: data.activeClubs, to: '/admin/clubs' },
     { label: 'Pending requests', value: data.pendingClubRequests, to: '/admin/requests' },
-    { label: 'Published posts', value: data.publishedPosts, to: '/?scope=all' },
-    { label: 'Comments', value: data.publishedComments, to: '/?scope=all' },
+    { label: 'Published posts', value: data.publishedPosts, to: '/feed?scope=all' },
+    { label: 'Comments', value: data.publishedComments, to: '/feed?scope=all' },
     { label: 'Upcoming events', value: data.upcomingEvents, to: '/admin/events' },
     { label: 'Draft announcements', value: data.draftAnnouncements, to: '/admin/announcements' },
   ]
 
   return (
-    <div className="grid gap-6">
+    <div className="stagger-in grid gap-6">
       <Card className="grid grid-cols-2 overflow-hidden lg:grid-cols-4">
         {figures.map((figure) => (
           <Link

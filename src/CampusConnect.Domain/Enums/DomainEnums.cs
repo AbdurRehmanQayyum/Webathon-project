@@ -64,5 +64,9 @@ public enum NotificationType : byte
     ClubRequestApproved = 3,
     ClubRequestRejected = 4,
     ModeratorAssigned = 5,
-    ContentRemoved = 6
+    ContentRemoved = 6,
+    Mention = 7,
+    AnnouncementPublished = 8,
+    EventScheduled = 9,
+    EventCancelled = 10
 }

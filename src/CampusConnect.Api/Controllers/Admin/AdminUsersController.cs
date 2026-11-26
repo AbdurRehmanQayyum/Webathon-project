@@ -1,12 +1,12 @@
-using CampusConnect.Api.Auth;
 using CampusConnect.Application.Common.Models;
 using CampusConnect.Application.Features.Users;
+using CampusConnect.Domain.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CampusConnect.Api.Controllers.Admin;
 
-[Authorize(Policy = Policies.Admin)]
+[Authorize(Policy = PermissionKeys.ManageUsers)]
 [Route("api/admin/users")]
 public sealed class AdminUsersController(IUserAdministrationService users) : ApiController
 {
@@ -14,6 +14,11 @@ public sealed class AdminUsersController(IUserAdministrationService users) : Api
     public async Task<ActionResult<PagedResult<AdminUserDto>>> List(
         [FromQuery] AdminUserQuery query, CancellationToken cancellationToken) =>
         await users.ListAsync(query, cancellationToken);
+
+    [HttpPost]
+    public async Task<ActionResult<CreatedResponse>> Create(
+        CreateUserRequest request, CancellationToken cancellationToken) =>
+        CreatedId("/api/users", await users.CreateAsync(request, cancellationToken));
 
     [HttpPut("{userId:int}/status")]
     public async Task<IActionResult> SetStatus(

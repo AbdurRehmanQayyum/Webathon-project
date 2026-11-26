@@ -1,6 +1,6 @@
 import { Pencil, Plus, XCircle } from 'lucide-react'
 import { useCallback, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { PageHeader } from '@/components/common/PageHeader'
 import { QueryState } from '@/components/common/QueryState'
 import { EmptyState } from '@/components/feedback/EmptyState'
@@ -21,6 +21,7 @@ type Scope = 'Upcoming' | 'Past'
 type Dialog = { type: 'create' } | { type: 'edit' | 'cancel'; id: number }
 
 export function EventsAdminPage() {
+  const location = useLocation()
   const { page, get, set } = useListParams()
   const scope: Scope = get('scope') === 'Past' ? 'Past' : 'Upcoming'
   const search = get('q')
@@ -67,6 +68,7 @@ export function EventsAdminPage() {
       </div>
       <QueryState
         query={events}
+        view={location.search}
         isEmpty={(data) => data.items.length === 0}
         empty={<EmptyState title="No events" description="Schedule the next department event." />}
       >

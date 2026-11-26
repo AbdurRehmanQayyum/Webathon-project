@@ -2,12 +2,15 @@ import { Check, Plus } from 'lucide-react'
 import { useToast } from '@/components/feedback/toast-context'
 import { Button } from '@/components/ui/Button'
 import { Tooltip } from '@/components/ui/Tooltip'
+import { useCurrentUser } from '@/features/auth/current-user'
+import { permissions } from '@/features/auth/permissions'
 import { useMembership } from './api'
 import type { Club } from './types'
 
 export function MembershipButton({ club }: { club: Club }) {
   const membership = useMembership(club.id)
   const toast = useToast()
+  const { can } = useCurrentUser()
 
   const change = (join: boolean) =>
     membership.mutate(join, {
@@ -45,7 +48,7 @@ export function MembershipButton({ club }: { club: Club }) {
     )
   }
 
-  if (club.status === 'Archived') return null
+  if (club.status === 'Archived' || !can(permissions.joinClubs)) return null
 
   return (
     <Button

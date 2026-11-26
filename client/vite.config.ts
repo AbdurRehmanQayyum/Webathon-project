@@ -18,6 +18,7 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       VitePWA({
         registerType: 'prompt',
+        devOptions: { enabled: true, type: 'module', navigateFallback: 'index.html' },
         includeAssets: ['favicon.svg', 'icons/apple-touch-icon.png'],
         manifest: {
           name: 'Campus Connect',
@@ -26,6 +27,7 @@ export default defineConfig(({ mode }) => {
           theme_color: '#8E1EA2',
           background_color: '#F8F7FA',
           display: 'standalone',
+          id: '/',
           start_url: '/',
           scope: '/',
           icons: [

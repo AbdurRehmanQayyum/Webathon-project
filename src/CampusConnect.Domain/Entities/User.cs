@@ -37,6 +37,10 @@ public partial class User
 
     public int? AvatarFileId { get; set; }
 
+    public string Username { get; set; } = null!;
+
+    public bool MustChangePassword { get; set; }
+
     public virtual ICollection<Announcement> Announcements { get; set; } = new List<Announcement>();
 
     public virtual ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
@@ -61,15 +65,21 @@ public partial class User
 
     public virtual ICollection<Comment> CommentModeratedByUsers { get; set; } = new List<Comment>();
 
+    public virtual ICollection<CommentVote> CommentVotes { get; set; } = new List<CommentVote>();
+
     public virtual ICollection<Event> Events { get; set; } = new List<Event>();
 
-    public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+    public virtual ICollection<Notification> NotificationActorUsers { get; set; } = new List<Notification>();
+
+    public virtual ICollection<Notification> NotificationRecipientUsers { get; set; } = new List<Notification>();
 
     public virtual ICollection<Post> PostAuthors { get; set; } = new List<Post>();
 
     public virtual ICollection<Post> PostModeratedByUsers { get; set; } = new List<Post>();
 
     public virtual ICollection<PostVote> PostVotes { get; set; } = new List<PostVote>();
+
+    public virtual ICollection<ClubCategory> Categories { get; set; } = new List<ClubCategory>();
 
     public virtual ICollection<Role> Roles { get; set; } = new List<Role>();
 }

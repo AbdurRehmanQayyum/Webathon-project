@@ -1,5 +1,7 @@
+import { useLocation } from 'react-router'
 import type { UseQueryResult } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
+import { Masonry } from '@/components/common/Masonry'
 import { QueryState } from '@/components/common/QueryState'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { Pagination } from '@/components/ui/Pagination'
@@ -16,9 +18,12 @@ interface PostResultsProps {
 }
 
 export function PostResults({ query, onPage, ...empty }: PostResultsProps) {
+  const { search } = useLocation()
+
   return (
     <QueryState
       query={query}
+      view={search}
       isEmpty={(data) => data.items.length === 0}
       empty={
         <EmptyState
@@ -30,11 +35,11 @@ export function PostResults({ query, onPage, ...empty }: PostResultsProps) {
     >
       {(data) => (
         <>
-          <div className="grid gap-3">
+          <Masonry columns="2xl:grid-cols-2">
             {data.items.map((post) => (
               <PostCard key={post.id} post={post} />
             ))}
-          </div>
+          </Masonry>
           <Pagination page={data.pageNumber} totalPages={data.totalPages} onChange={onPage} />
         </>
       )}

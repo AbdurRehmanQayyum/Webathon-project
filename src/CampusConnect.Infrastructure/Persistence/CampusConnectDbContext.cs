@@ -30,6 +30,8 @@ public partial class CampusConnectDbContext : DbContext
 
     public virtual DbSet<Comment> Comments { get; set; }
 
+    public virtual DbSet<CommentVote> CommentVotes { get; set; }
+
     public virtual DbSet<Event> Events { get; set; }
 
     public virtual DbSet<Notification> Notifications { get; set; }
@@ -39,6 +41,10 @@ public partial class CampusConnectDbContext : DbContext
     public virtual DbSet<PostVote> PostVotes { get; set; }
 
     public virtual DbSet<Role> Roles { get; set; }
+
+    public virtual DbSet<RolePermission> RolePermissions { get; set; }
+
+    public virtual DbSet<Tag> Tags { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
 
@@ -236,7 +242,6 @@ public partial class CampusConnectDbContext : DbContext
                 .HasPrecision(3)
                 .HasDefaultValueSql("(sysutcdatetime())", "DF_ClubRequests_CreatedAtUtc");
             entity.Property(e => e.Description).HasMaxLength(500);
-            entity.Property(e => e.Justification).HasMaxLength(1000);
             entity.Property(e => e.ProposedName).HasMaxLength(80);
             entity.Property(e => e.RejectionReason).HasMaxLength(500);
             entity.Property(e => e.ReviewedAtUtc).HasPrecision(3);
@@ -270,7 +275,8 @@ public partial class CampusConnectDbContext : DbContext
 
             entity.HasIndex(e => new { e.PostId, e.CreatedAtUtc }, "IX_Comments_PostId_CreatedAtUtc");
 
-            entity.Property(e => e.Body).HasMaxLength(4000);
+            entity.HasIndex(e => e.RootCommentId, "IX_Comments_RootCommentId");
+
             entity.Property(e => e.CreatedAtUtc)
                 .HasPrecision(3)
                 .HasDefaultValueSql("(sysutcdatetime())", "DF_Comments_CreatedAtUtc");
@@ -295,6 +301,48 @@ public partial class CampusConnectDbContext : DbContext
                 .HasForeignKey(d => d.PostId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Comments_Posts");
+
+            entity.HasOne(d => d.RootComment).WithMany(p => p.InverseRootComment)
+                .HasForeignKey(d => d.RootCommentId)
+                .HasConstraintName("FK_Comments_RootComment");
+
+            entity.HasMany(d => d.Tags).WithMany(p => p.Comments)
+                .UsingEntity<Dictionary<string, object>>(
+                    "CommentTag",
+                    r => r.HasOne<Tag>().WithMany()
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("FK_CommentTags_Tags"),
+                    l => l.HasOne<Comment>().WithMany()
+                        .HasForeignKey("CommentId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("FK_CommentTags_Comments"),
+                    j =>
+                    {
+                        j.HasKey("CommentId", "TagId");
+                        j.ToTable("CommentTags");
+                        j.HasIndex(new[] { "TagId" }, "IX_CommentTags_TagId");
+                    });
+        });
+
+        modelBuilder.Entity<CommentVote>(entity =>
+        {
+            entity.HasKey(e => new { e.CommentId, e.UserId });
+
+            entity.Property(e => e.CreatedAtUtc)
+                .HasPrecision(3)
+                .HasDefaultValueSql("(sysutcdatetime())", "DF_CommentVotes_CreatedAtUtc");
+            entity.Property(e => e.UpdatedAtUtc).HasPrecision(3);
+
+            entity.HasOne(d => d.Comment).WithMany(p => p.CommentVotes)
+                .HasForeignKey(d => d.CommentId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_CommentVotes_Comments");
+
+            entity.HasOne(d => d.User).WithMany(p => p.CommentVotes)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_CommentVotes_Users");
         });
 
         modelBuilder.Entity<Event>(entity =>
@@ -323,13 +371,18 @@ public partial class CampusConnectDbContext : DbContext
         {
             entity.HasIndex(e => new { e.RecipientUserId, e.IsRead, e.CreatedAtUtc }, "IX_Notifications_Recipient").IsDescending(false, false, true);
 
+            entity.HasIndex(e => new { e.RecipientUserId, e.CreatedAtUtc }, "IX_Notifications_Recipient_Created").IsDescending(false, true);
+
             entity.Property(e => e.CreatedAtUtc)
                 .HasPrecision(3)
                 .HasDefaultValueSql("(sysutcdatetime())", "DF_Notifications_CreatedAtUtc");
             entity.Property(e => e.LinkPath).HasMaxLength(200);
-            entity.Property(e => e.Message).HasMaxLength(300);
 
-            entity.HasOne(d => d.RecipientUser).WithMany(p => p.Notifications)
+            entity.HasOne(d => d.ActorUser).WithMany(p => p.NotificationActorUsers)
+                .HasForeignKey(d => d.ActorUserId)
+                .HasConstraintName("FK_Notifications_Actor");
+
+            entity.HasOne(d => d.RecipientUser).WithMany(p => p.NotificationRecipientUsers)
                 .HasForeignKey(d => d.RecipientUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Notifications_Recipient");
@@ -366,6 +419,24 @@ public partial class CampusConnectDbContext : DbContext
             entity.HasOne(d => d.ModeratedByUser).WithMany(p => p.PostModeratedByUsers)
                 .HasForeignKey(d => d.ModeratedByUserId)
                 .HasConstraintName("FK_Posts_ModeratedByUser");
+
+            entity.HasMany(d => d.Tags).WithMany(p => p.Posts)
+                .UsingEntity<Dictionary<string, object>>(
+                    "PostTag",
+                    r => r.HasOne<Tag>().WithMany()
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("FK_PostTags_Tags"),
+                    l => l.HasOne<Post>().WithMany()
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("FK_PostTags_Posts"),
+                    j =>
+                    {
+                        j.HasKey("PostId", "TagId");
+                        j.ToTable("PostTags");
+                        j.HasIndex(new[] { "TagId" }, "IX_PostTags_TagId");
+                    });
         });
 
         modelBuilder.Entity<PostVote>(entity =>
@@ -398,6 +469,28 @@ public partial class CampusConnectDbContext : DbContext
             entity.Property(e => e.Name).HasMaxLength(30);
         });
 
+        modelBuilder.Entity<RolePermission>(entity =>
+        {
+            entity.HasKey(e => new { e.RoleId, e.Permission });
+
+            entity.Property(e => e.Permission).HasMaxLength(60);
+
+            entity.HasOne(d => d.Role).WithMany(p => p.RolePermissions)
+                .HasForeignKey(d => d.RoleId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_RolePermissions_Roles");
+        });
+
+        modelBuilder.Entity<Tag>(entity =>
+        {
+            entity.HasIndex(e => e.Name, "UQ_Tags_Name").IsUnique();
+
+            entity.Property(e => e.CreatedAtUtc)
+                .HasPrecision(3)
+                .HasDefaultValueSql("(sysutcdatetime())", "DF_Tags_CreatedAtUtc");
+            entity.Property(e => e.Name).HasMaxLength(30);
+        });
+
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasIndex(e => e.FullName, "IX_Users_FullName");
@@ -408,7 +501,8 @@ public partial class CampusConnectDbContext : DbContext
                 .IsUnique()
                 .HasFilter("([RegistrationNumber] IS NOT NULL)");
 
-            entity.Property(e => e.Bio).HasMaxLength(500);
+            entity.HasIndex(e => e.Username, "UX_Users_Username").IsUnique();
+
             entity.Property(e => e.CreatedAtUtc)
                 .HasPrecision(3)
                 .HasDefaultValueSql("(sysutcdatetime())", "DF_Users_CreatedAtUtc");
@@ -422,10 +516,28 @@ public partial class CampusConnectDbContext : DbContext
             entity.Property(e => e.SecurityStamp).HasDefaultValueSql("(newid())", "DF_Users_SecurityStamp");
             entity.Property(e => e.Title).HasMaxLength(60);
             entity.Property(e => e.UpdatedAtUtc).HasPrecision(3);
+            entity.Property(e => e.Username).HasMaxLength(40);
 
             entity.HasOne(d => d.AvatarFile).WithMany(p => p.Users)
                 .HasForeignKey(d => d.AvatarFileId)
                 .HasConstraintName("FK_Users_AvatarFile");
+
+            entity.HasMany(d => d.Categories).WithMany(p => p.Users)
+                .UsingEntity<Dictionary<string, object>>(
+                    "UserInterest",
+                    r => r.HasOne<ClubCategory>().WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("FK_UserInterests_ClubCategories"),
+                    l => l.HasOne<User>().WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("FK_UserInterests_Users"),
+                    j =>
+                    {
+                        j.HasKey("UserId", "CategoryId");
+                        j.ToTable("UserInterests");
+                    });
 
             entity.HasMany(d => d.Roles).WithMany(p => p.Users)
                 .UsingEntity<Dictionary<string, object>>(

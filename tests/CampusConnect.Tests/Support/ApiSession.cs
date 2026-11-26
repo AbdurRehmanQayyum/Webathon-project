@@ -59,6 +59,13 @@ public sealed class ApiSession
 
     public Task<HttpResponseMessage> RawGetAsync(string path) => _client.GetAsync(path);
 
+    public Task<HttpResponseMessage> RangeAsync(string path, long from, long to)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, path);
+        request.Headers.Range = new RangeHeaderValue(from, to);
+        return _client.SendAsync(request);
+    }
+
     public Task<HttpResponseMessage> PostAsync(
         string path, object? body = null, HttpStatusCode expected = HttpStatusCode.NoContent) =>
         SendAsync(HttpMethod.Post, path, body, expected);

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Wraps the numbered SQL scripts so they can ship as an EF Core migration bundle -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.15">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.15" />
+  </ItemGroup>
+
+  <!-- 01 creates the database, which the migrator does itself -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\database\*.sql" Exclude="..\..\database\01_*.sql"
+                      LogicalName="%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>

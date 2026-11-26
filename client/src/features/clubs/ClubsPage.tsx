@@ -1,3 +1,4 @@
+import { useLocation } from 'react-router'
 import { Plus } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { PageHeader } from '@/components/common/PageHeader'
@@ -20,6 +21,7 @@ const sortOptions = [
 ]
 
 export function ClubsPage() {
+  const location = useLocation()
   const { page, get, set } = useListParams()
   const [isRequesting, setRequesting] = useState(false)
   const categories = useCategories()
@@ -97,6 +99,7 @@ export function ClubsPage() {
 
       <QueryState
         query={clubs}
+        view={location.search}
         isEmpty={(data) => data.items.length === 0}
         empty={
           <EmptyState
@@ -107,7 +110,7 @@ export function ClubsPage() {
       >
         {(data) => (
           <>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="stagger-in grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {data.items.map((club) => (
                 <ClubCard key={club.id} club={club} />
               ))}

@@ -19,15 +19,21 @@ public sealed record PagedResult<T>(IReadOnlyList<T> Items, int PageNumber, int 
 // Pagination
 public static class PagingExtensions
 {
-    public static async Task<PagedResult<T>> ToPagedResultAsync<T>(
-        this IQueryable<T> query, PageQuery page, CancellationToken cancellationToken)
+    public static Task<PagedResult<T>> ToPagedResultAsync<T>(
+        this IQueryable<T> query, PageQuery page, CancellationToken cancellationToken) =>
+        query.ToPagedResultAsync(page, items => items, cancellationToken);
+
+    // Counts the source and projects only the requested page
+    public static async Task<PagedResult<TResult>> ToPagedResultAsync<TSource, TResult>(
+        this IQueryable<TSource> query,
+        PageQuery page,
+        Func<IQueryable<TSource>, IQueryable<TResult>> project,
+        CancellationToken cancellationToken)
     {
         var totalCount = await query.CountAsync(cancellationToken);
-        var items = await query
-            .Skip((page.PageNumber - 1) * page.PageSize)
-            .Take(page.PageSize)
-            .ToListAsync(cancellationToken);
+        var window = query.Skip((page.PageNumber - 1) * page.PageSize).Take(page.PageSize);
+        var items = await project(window).ToListAsync(cancellationToken);
 
-        return new PagedResult<T>(items, page.PageNumber, page.PageSize, totalCount);
+        return new PagedResult<TResult>(items, page.PageNumber, page.PageSize, totalCount);
     }
 }

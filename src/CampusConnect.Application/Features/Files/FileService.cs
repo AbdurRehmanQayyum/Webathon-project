@@ -14,7 +14,7 @@ public interface IFileService
     Task<FilePolicyDto> GetPolicyAsync(CancellationToken cancellationToken);
     Task<AttachmentDto> UploadAsync(
         FilePurpose purpose, int ownerId, FileUpload file, CancellationToken cancellationToken);
-    Task<FileDownload> DownloadAsync(int fileId, CancellationToken cancellationToken);
+    Task<FileDownload> DownloadAsync(int fileId, bool asAttachment, CancellationToken cancellationToken);
     Task DeleteAsync(int fileId, CancellationToken cancellationToken);
 }
 
@@ -26,17 +26,13 @@ public sealed class FileService(
     IOptions<FileUploadOptions> options,
     ILogger<FileService> logger) : IFileService
 {
-    private const int MaxAttachmentsPerItem = 4;
-
     public async Task<FilePolicyDto> GetPolicyAsync(CancellationToken cancellationToken)
     {
         var settings = options.Value;
-        var allowed = FileValidation.AllowedExtensions(settings);
 
         return new FilePolicyDto(
-            settings.EffectiveMaxFileSize,
-            allowed,
-            [.. allowed.Where(FileValidation.IsImage)],
+            FileValidation.AllowedTypes(settings),
+            FilePurposeRules.MaxAttachmentsPerItem,
             settings.UserQuota,
             await GetUsedBytesAsync(cancellationToken));
     }
@@ -108,27 +104,28 @@ public sealed class FileService(
             attachment.Id, attachment.OriginalFileName, attachment.ContentType, attachment.FileSize);
     }
 
-    public async Task<FileDownload> DownloadAsync(int fileId, CancellationToken cancellationToken)
+    public async Task<FileDownload> DownloadAsync(
+        int fileId, bool asAttachment, CancellationToken cancellationToken)
     {
         await access.EnsureCanViewAsync(fileId, cancellationToken);
         var file = await db.Attachments.AsNoTracking().SingleAsync(a => a.Id == fileId, cancellationToken);
 
-        var isImage = FileValidation.IsImage(file.FileExtension);
+        var inline = !asAttachment && FileValidation.IsPreviewable(file.FileExtension);
         var isCommunityImage = FilePurposeRules.IsCommunityImage((FilePurpose)file.Purpose);
         var url = await storage.GetPresignedUrlAsync(
             file.ObjectKey,
-            new StoredObjectResponse(file.OriginalFileName, file.ContentType, isImage),
+            new StoredObjectResponse(file.OriginalFileName, file.ContentType, inline),
             TimeSpan.FromMinutes(options.Value.PresignedUrlExpirationMinutes),
             cancellationToken);
 
         if (url is not null)
         {
-            return new FileDownload(url, null, file.ContentType, file.OriginalFileName, isCommunityImage);
+            return new FileDownload(url, null, file.ContentType, file.OriginalFileName, inline, isCommunityImage);
         }
 
         var content = await storage.DownloadAsync(file.ObjectKey, cancellationToken)
             ?? throw new NotFoundException("File");
-        return new FileDownload(null, content, file.ContentType, file.OriginalFileName, isCommunityImage);
+        return new FileDownload(null, content, file.ContentType, file.OriginalFileName, inline, isCommunityImage);
     }
 
     public async Task DeleteAsync(int fileId, CancellationToken cancellationToken)
@@ -174,9 +171,10 @@ public sealed class FileService(
             _ => siblings.Where(a => a.EventId == ownerId)
         };
 
-        if (await siblings.CountAsync(cancellationToken) >= MaxAttachmentsPerItem)
+        if (await siblings.CountAsync(cancellationToken) >= FilePurposeRules.MaxAttachmentsPerItem)
         {
-            throw new ConflictException($"You can attach up to {MaxAttachmentsPerItem} files.", "file");
+            throw new ConflictException(
+                $"You can attach up to {FilePurposeRules.MaxAttachmentsPerItem} files.", "file");
         }
     }
 

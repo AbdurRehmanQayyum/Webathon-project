@@ -3,11 +3,11 @@ import { useParams } from 'react-router'
 import { ExternalLink } from '@/components/common/ExternalLink'
 import { Breadcrumb } from '@/components/common/PageHeader'
 import { QueryState } from '@/components/common/QueryState'
-import { RichText } from '@/components/common/RichText'
+import { RichContent } from '@/components/editor/RichContent'
 import { Avatar } from '@/components/ui/Avatar'
 import { buttonStyles } from '@/components/ui/button-styles'
 import { Card } from '@/components/ui/Card'
-import { AttachmentList } from '@/features/files/AttachmentList'
+import { AttachmentGallery } from '@/features/files/AttachmentGallery'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { formatDate, formatTime } from '@/lib/format'
 import { useAnnouncement } from './api'
@@ -18,7 +18,7 @@ export function AnnouncementDetailPage() {
   useDocumentTitle(announcement.data?.title)
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <>
       <QueryState query={announcement}>
         {(data) => {
           const published = data.publishedAtUtc ?? data.createdAtUtc
@@ -47,7 +47,7 @@ export function AnnouncementDetailPage() {
                     </p>
                   </div>
                 </div>
-                <RichText text={data.body} className="leading-relaxed" />
+                <RichContent html={data.body} className="leading-relaxed" />
                 {data.linkUrl && (
                   <ExternalLink
                     href={data.linkUrl}
@@ -61,12 +61,12 @@ export function AnnouncementDetailPage() {
                     <span className="truncate">{data.linkLabel ?? 'Open link'}</span>
                   </ExternalLink>
                 )}
-                <AttachmentList attachments={data.attachments} />
+                <AttachmentGallery attachments={data.attachments} />
               </Card>
             </>
           )
         }}
       </QueryState>
-    </div>
+    </>
   )
 }

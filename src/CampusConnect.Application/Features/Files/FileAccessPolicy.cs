@@ -1,6 +1,7 @@
 using CampusConnect.Application.Common.Abstractions;
 using CampusConnect.Application.Common.Exceptions;
 using CampusConnect.Application.Features.Clubs;
+using CampusConnect.Domain.Constants;
 using CampusConnect.Domain.Entities;
 using CampusConnect.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,7 @@ public sealed class FileAccessPolicy(IAppDbContext db, ICurrentUser currentUser,
         switch (purpose)
         {
             case FilePurpose.Avatar:
+                currentUser.Require(PermissionKeys.UploadFiles);
                 if (ownerId != currentUser.Id)
                 {
                     throw new ForbiddenException("You can only change your own picture.");
@@ -24,7 +26,7 @@ public sealed class FileAccessPolicy(IAppDbContext db, ICurrentUser currentUser,
 
             case FilePurpose.ClubLogo or FilePurpose.ClubCover:
                 await EnsureExistsAsync(db.Clubs.Where(c => c.Id == ownerId), "Club", cancellationToken);
-                await clubAccess.EnsureCanModerateAsync(ownerId, cancellationToken);
+                await EnsureCanBrandAsync(ownerId, cancellationToken);
                 break;
 
             case FilePurpose.PostAttachment:
@@ -32,7 +34,7 @@ public sealed class FileAccessPolicy(IAppDbContext db, ICurrentUser currentUser,
                 break;
 
             case FilePurpose.AnnouncementAttachment:
-                EnsureAdmin();
+                currentUser.Require(PermissionKeys.ManageAnnouncements);
                 await EnsureExistsAsync(
                     db.Announcements.Where(a => a.Id == ownerId && !a.IsDeleted),
                     "Announcement",
@@ -40,7 +42,7 @@ public sealed class FileAccessPolicy(IAppDbContext db, ICurrentUser currentUser,
                 break;
 
             case FilePurpose.EventAttachment:
-                EnsureAdmin();
+                currentUser.Require(PermissionKeys.ManageEvents);
                 await EnsureExistsAsync(db.Events.Where(e => e.Id == ownerId), "Event", cancellationToken);
                 break;
 
@@ -54,6 +56,7 @@ public sealed class FileAccessPolicy(IAppDbContext db, ICurrentUser currentUser,
     {
         var userId = currentUser.Id;
         var isAdmin = currentUser.IsAdmin;
+        var seesDrafts = currentUser.Has(PermissionKeys.ManageAnnouncements);
 
         var isVisible = await db.Attachments
             .Where(a => a.Id == fileId && !a.IsDeleted)
@@ -68,7 +71,7 @@ public sealed class FileAccessPolicy(IAppDbContext db, ICurrentUser currentUser,
                                     || a.Post.Club.ClubModerators.Any(m => m.UserId == userId)))))
                     || (a.Announcement != null
                         && !a.Announcement.IsDeleted
-                        && (a.Announcement.IsPublished || isAdmin)),
+                        && (a.Announcement.IsPublished || seesDrafts)),
                 cancellationToken);
 
         if (!isVisible)
@@ -95,7 +98,7 @@ public sealed class FileAccessPolicy(IAppDbContext db, ICurrentUser currentUser,
                     .Select(c => (int?)c.Id)
                     .SingleOrDefaultAsync(cancellationToken)
                     ?? throw new NotFoundException("File");
-                await clubAccess.EnsureCanModerateAsync(clubId, cancellationToken);
+                await EnsureCanBrandAsync(clubId, cancellationToken);
                 break;
 
             case FilePurpose.PostAttachment:
@@ -105,19 +108,35 @@ public sealed class FileAccessPolicy(IAppDbContext db, ICurrentUser currentUser,
                     .SingleAsync(cancellationToken);
                 if (post.AuthorId != currentUser.Id)
                 {
-                    await clubAccess.EnsureCanModerateAsync(post.ClubId, cancellationToken);
+                    await clubAccess.EnsureCanModerateAsync(
+                        post.ClubId, PermissionKeys.ModeratePosts, cancellationToken);
                 }
 
                 break;
 
-            default:
-                EnsureAdmin();
+            case FilePurpose.AnnouncementAttachment:
+                currentUser.Require(PermissionKeys.ManageAnnouncements);
                 break;
+
+            default:
+                currentUser.Require(PermissionKeys.ManageEvents);
+                break;
+        }
+    }
+
+    // Club images belong to club managers and the assigned moderators
+    private async Task EnsureCanBrandAsync(int clubId, CancellationToken cancellationToken)
+    {
+        if (!currentUser.Has(PermissionKeys.ManageClubs)
+            && !await clubAccess.IsAssignedModeratorAsync(clubId, cancellationToken))
+        {
+            throw new ForbiddenException("Only the club's moderators can change its images.");
         }
     }
 
     private async Task EnsurePostAuthorAsync(int postId, CancellationToken cancellationToken)
     {
+        currentUser.Require(PermissionKeys.UploadFiles);
         var post = await db.Posts
             .Where(p => p.Id == postId && p.Status == (byte)ContentStatus.Published)
             .Select(p => new { p.AuthorId, p.ClubId })

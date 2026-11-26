@@ -33,8 +33,13 @@ export function SettingsPage() {
   const policy = useFilePolicy()
 
   return (
-    <div className="mx-auto grid max-w-2xl gap-4">
-      <PageHeader title="Settings" description={user.email} />
+    <>
+      <PageHeader title="Settings" description={`${user.email} · @${user.username}`} />
+      <div className="stagger-in grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
+      <Section title="Profile details">
+        <ProfileForm />
+      </Section>
+      <div className="stagger-in grid gap-4">
       <Section
         title="Profile picture"
         description={
@@ -49,9 +54,6 @@ export function SettingsPage() {
           uploadPath="/api/users/me/avatar"
         />
       </Section>
-      <Section title="Profile details">
-        <ProfileForm />
-      </Section>
       <Section title="Password" description="Changing it signs out your other sessions.">
         <PasswordForm />
       </Section>
@@ -61,6 +63,8 @@ export function SettingsPage() {
       <Section title="Install the app">
         <InstallCard />
       </Section>
-    </div>
+      </div>
+      </div>
+    </>
   )
 }

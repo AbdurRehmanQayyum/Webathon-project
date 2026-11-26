@@ -5,22 +5,25 @@ topic clubs with discussion feeds, official announcements and a department event
 
 ## Features
 
-- Student registration and cookie sign-in with Admin, Moderator and Student roles
-- Clubs: browse, join, leave, request new clubs; admin approval, editing and moderator assignment
-- Discussions: text and link posts, nested comments, votes, bookmarks, pinned posts
+- Public landing page, three-step registration with interests, installable PWA
+- Admin, Moderator and Student roles with an editable permission matrix; admins create accounts
+- Clubs: browse, join, leave, request; approval, editing and moderator assignment
+- Rich text posts and comments with `@mentions`, `#tags`, votes, bookmarks and pinned posts
+- Comment sorting (recent, popular, oldest) with server-side pagination
+- Image, video, audio and document attachments with in-app preview and download
+- Club recommendations and a "For you" feed based on interests, votes, comments and memberships
 - Moderation limited to assigned clubs
-- Official announcements with links and attachments, drafts and publishing
-- Event calendar with monthly, agenda, upcoming and past views; cancellation with reason
-- File storage with a local provider and Cloudflare R2 (S3 compatible)
-- Live comments and notifications over SignalR
-- Installable PWA, light and dark themes, desktop and mobile layouts
+- Official announcements, and an event calendar with hover details and a clock time picker
+- Notification centre with category and unread filters; live updates over SignalR
+- File storage with a local provider or Cloudflare R2 (S3 compatible)
+- Written content encrypted in the database; responsive light and dark themes
 
 ## Technology
 
 | Area | Stack |
 | --- | --- |
-| Frontend | React 19, TypeScript, Vite 8, Tailwind CSS 4, React Router, TanStack Query, React Hook Form, Zod, Motion, Radix primitives |
-| Backend | .NET 10, ASP.NET Core Web API, EF Core 10, FluentValidation, SignalR |
+| Frontend | React 19, TypeScript, Vite 8, Tailwind CSS 4, React Router, TanStack Query, React Hook Form, Zod, TipTap, Motion, Radix primitives |
+| Backend | .NET 10, ASP.NET Core Web API, EF Core 10, FluentValidation, SignalR, JWT |
 | Database | Microsoft SQL Server, Database First |
 
 ## Quick start
@@ -50,6 +53,10 @@ npm --prefix client run dev
 ```
 
 Open <http://localhost:5173>.
+
+On its first Development start the API creates `src/CampusConnect.Api/appsettings.Local.json` with
+signing and encryption keys for your machine. The file is ignored by git. If your database already
+holds encrypted content from another key, copy that key in before starting.
 
 ## Demo accounts
 

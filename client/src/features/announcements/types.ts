@@ -5,7 +5,9 @@ export type AnnouncementPriority = 'Normal' | 'Important'
 export interface Announcement {
   id: number
   title: string
+  // Sanitised markup
   body: string
+  excerpt: string
   linkUrl: string | null
   linkLabel: string | null
   priority: AnnouncementPriority

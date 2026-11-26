@@ -1,9 +1,13 @@
+import { useLocation } from 'react-router'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
+import { Masonry } from '@/components/common/Masonry'
 import { Breadcrumb, PageHeader } from '@/components/common/PageHeader'
 import { QueryState } from '@/components/common/QueryState'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { Button } from '@/components/ui/Button'
+import { useCurrentUser } from '@/features/auth/current-user'
+import { permissions } from '@/features/auth/permissions'
 import { Pagination } from '@/components/ui/Pagination'
 import { useListParams } from '@/hooks/useListParams'
 import { useMyClubRequests } from './api'
@@ -11,28 +15,33 @@ import { ClubRequestCard } from './ClubRequestCard'
 import { ClubRequestDialog } from './ClubRequestDialog'
 
 export function ClubRequestsPage() {
+  const location = useLocation()
   const { page, set } = useListParams()
   const [isRequesting, setRequesting] = useState(false)
   const requests = useMyClubRequests({ pageNumber: page, pageSize: 8 })
+  const { can } = useCurrentUser()
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <>
       <Breadcrumb items={[{ label: 'Clubs', to: '/clubs' }, { label: 'My requests' }]} />
       <PageHeader
         title="My club requests"
         description="Track the status of clubs you have proposed."
         actions={
-          <Button
-            variant="primary"
-            icon={<Plus className="size-4" />}
-            onClick={() => setRequesting(true)}
-          >
-            New request
-          </Button>
+          can(permissions.requestClubs) && (
+            <Button
+              variant="primary"
+              icon={<Plus className="size-4" />}
+              onClick={() => setRequesting(true)}
+            >
+              New request
+            </Button>
+          )
         }
       />
       <QueryState
         query={requests}
+        view={location.search}
         isEmpty={(data) => data.items.length === 0}
         empty={
           <EmptyState
@@ -43,11 +52,11 @@ export function ClubRequestsPage() {
       >
         {(data) => (
           <>
-            <div className="grid gap-3">
+            <Masonry columns="xl:grid-cols-2">
               {data.items.map((request) => (
                 <ClubRequestCard key={request.id} request={request} />
               ))}
-            </div>
+            </Masonry>
             <Pagination
               page={data.pageNumber}
               totalPages={data.totalPages}
@@ -57,6 +66,6 @@ export function ClubRequestsPage() {
         )}
       </QueryState>
       <ClubRequestDialog open={isRequesting} onClose={() => setRequesting(false)} />
-    </div>
+    </>
   )
 }

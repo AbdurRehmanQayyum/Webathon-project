@@ -61,15 +61,30 @@ function networkError() {
   )
 }
 
+// Readable fallbacks for responses that carry no explanation of their own
+const statusMessages: Record<number, string> = {
+  400: 'Check the details and try again.',
+  401: 'Sign in to continue.',
+  403: 'You do not have permission to do that.',
+  404: 'This item is no longer available.',
+  409: 'This conflicts with a recent change. Refresh and try again.',
+  413: 'That upload is larger than the server accepts.',
+  429: 'Too many requests. Wait a minute and try again.',
+  500: 'Something went wrong on our side. Try again shortly.',
+  502: 'The server is temporarily unreachable.',
+  503: 'This service is unavailable right now.',
+}
+
 function toApiError(status: number, problem: Problem) {
   const fieldErrors = Object.fromEntries(
     Object.entries(problem.errors ?? {}).map(([field, messages]) => [field, messages[0] ?? '']),
   )
+  const hasOwnTitle = problem.title && !['Forbidden', 'Unauthorized'].includes(problem.title)
   const message =
-    status === 429
-      ? 'Too many attempts. Wait a minute and try again.'
-      : (Object.values(fieldErrors)[0] ?? problem.title ?? 'The request failed.')
-  return new ApiError(status, message, fieldErrors)
+    Object.values(fieldErrors)[0] ??
+    (hasOwnTitle ? problem.title : statusMessages[status]) ??
+    'The request failed.'
+  return new ApiError(status, message ?? 'The request failed.', fieldErrors)
 }
 
 async function send(url: string, init: RequestInit) {
@@ -138,6 +153,7 @@ export const api = {
 }
 
 export const fileUrl = (fileId: number) => `${BASE_URL}/api/files/${fileId}`
+export const downloadUrl = (fileId: number) => `${fileUrl(fileId)}?download=true`
 
 function parseJson(text: string): unknown {
   try {

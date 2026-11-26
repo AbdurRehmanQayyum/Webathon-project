@@ -3,13 +3,16 @@
 ## Database First
 
 The SQL scripts in `database/` define the schema. EF Core entities and `CampusConnectDbContext` are
-generated from the live database. There are no migrations and no `EnsureCreated`.
+generated from the live database. The application has no code-first migrations and never calls
+`EnsureCreated`. For servers, `tools/CampusConnect.DbMigrator` wraps the same scripts in an EF Core
+migration bundle.
 
 Change process:
 
 1. Add the next numbered, idempotent script.
 2. Run it.
-3. Re-scaffold:
+3. Add a class for the script in `tools/CampusConnect.DbMigrator/Migrations`.
+4. Re-scaffold:
 
 ```powershell
 dotnet tool restore
@@ -19,8 +22,9 @@ dotnet tool restore
 dotnet ef dbcontext scaffold "Server=.\SQLEXPRESS;Database=CampusConnectDB;Trusted_Connection=True;TrustServerCertificate=True" Microsoft.EntityFrameworkCore.SqlServer --project src/CampusConnect.Infrastructure --startup-project src/CampusConnect.Infrastructure --context CampusConnectDbContext --context-dir Persistence --context-namespace CampusConnect.Infrastructure.Persistence --output-dir ../CampusConnect.Domain/Entities --namespace CampusConnect.Domain.Entities --no-onconfiguring --force
 ```
 
-Hand-written behaviour stays in `CampusConnectDbContext.Extensions.cs` (UTC conversion,
-transactions) and `AuditTimestampInterceptor`.
+Hand-written behaviour stays in `CampusConnectDbContext.Extensions.cs` (UTC conversion, field
+encryption, transactions) and `AuditTimestampInterceptor`. Encrypted values start with `enc:v1:`;
+rows written before encryption are upgraded when the app starts.
 
 ## Relationships
 
@@ -48,6 +52,11 @@ erDiagram
   Attachments |o--o{ Users : avatar
   Attachments |o--o{ Clubs : logo_cover
   Users ||--o{ Notifications : receives
+  Comments ||--o{ CommentVotes : scored
+  Posts }o--o{ Tags : PostTags
+  Comments }o--o{ Tags : CommentTags
+  Users }o--o{ ClubCategories : UserInterests
+  Roles ||--o{ RolePermissions : grants
 ```
 
 ## Integrity rules

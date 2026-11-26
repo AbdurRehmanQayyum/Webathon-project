@@ -39,7 +39,12 @@ public sealed partial class CampusConnectApp : WebApplicationFactory<Program>, I
                 ["Seed:DemoPassword"] = DemoPassword,
                 ["RateLimiting:SensitivePermitsPerMinute"] = "10000",
                 ["Storage:Provider"] = "Local",
-                ["Storage:LocalRootPath"] = Path.Combine(Path.GetTempPath(), "campusconnect-tests")
+                ["Storage:LocalRootPath"] = Path.Combine(Path.GetTempPath(), "campusconnect-tests"),
+                // Tests never reach a real bucket, whatever the machine's own settings say
+                ["Storage:Endpoint"] = "",
+                ["Storage:BucketName"] = "",
+                ["Storage:AccessKeyId"] = "",
+                ["Storage:SecretAccessKey"] = ""
             })
             .AddInMemoryCollection(_overrides));
     }

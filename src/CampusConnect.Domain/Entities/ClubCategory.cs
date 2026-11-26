@@ -16,4 +16,6 @@ public partial class ClubCategory
     public virtual ICollection<ClubRequest> ClubRequests { get; set; } = new List<ClubRequest>();
 
     public virtual ICollection<Club> Clubs { get; set; } = new List<Club>();
+
+    public virtual ICollection<User> Users { get; set; } = new List<User>();
 }

@@ -10,7 +10,8 @@ public sealed record RegisterRequest(
     string RegistrationNumber,
     byte Semester,
     string Password,
-    string? Bio);
+    string? Bio,
+    IReadOnlyList<int>? InterestIds = null);
 
 public sealed record LoginRequest(string Email, string Password, bool RememberMe);
 
@@ -21,12 +22,15 @@ public sealed record SessionIdentity(
     string FullName,
     string Email,
     Guid SecurityStamp,
-    IReadOnlyList<string> Roles);
+    IReadOnlyList<string> Roles,
+    IReadOnlyList<string> Permissions,
+    bool MustChangePassword);
 
 public sealed record CurrentUserDto
 {
     public required int Id { get; init; }
     public required string FullName { get; init; }
+    public required string Username { get; init; }
     public required string Email { get; init; }
     public string? RegistrationNumber { get; init; }
     public byte? Semester { get; init; }
@@ -34,7 +38,10 @@ public sealed record CurrentUserDto
     public string? Bio { get; init; }
     public int? AvatarFileId { get; init; }
     public required DateTime CreatedAtUtc { get; init; }
+    public required bool MustChangePassword { get; init; }
     public required IReadOnlyList<string> Roles { get; init; }
+    public IReadOnlyList<string> Permissions { get; init; } = [];
+    public required IReadOnlyList<int> InterestIds { get; init; }
     public required IReadOnlyList<ClubReferenceDto> ModeratedClubs { get; init; }
     public required int JoinedClubCount { get; init; }
 }
@@ -59,6 +66,8 @@ public sealed class RegisterRequestValidator : AbstractValidator<RegisterRequest
         RuleFor(x => x.Semester).InclusiveBetween((byte)1, (byte)8);
         RuleFor(x => x.Password).StrongPassword();
         RuleFor(x => x.Bio).MaximumLength(500);
+        RuleFor(x => x.InterestIds).Must(ids => ids is null || ids.Count <= 8)
+            .WithMessage("Choose up to 8 interests.");
     }
 }
 

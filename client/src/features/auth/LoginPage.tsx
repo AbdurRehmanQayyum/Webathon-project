@@ -31,8 +31,10 @@ export function LoginPage() {
 
   return (
     <>
-      <h1 className="text-2xl font-semibold">Welcome back</h1>
-      <p className="mt-1 text-sm text-muted">Sign in to your department community.</p>
+      <header className="text-center">
+        <h1 className="text-2xl font-semibold">Welcome back</h1>
+        <p className="mt-1 text-sm text-muted">Sign in to your department community.</p>
+      </header>
 
       <form onSubmit={submit} noValidate className="mt-6 grid gap-4">
         {formError && <Alert tone="danger">{formError}</Alert>}
@@ -62,7 +64,7 @@ export function LoginPage() {
         </Button>
       </form>
 
-      <p className="mt-6 text-sm text-muted">
+      <p className="mt-6 text-center text-sm text-muted">
         New to Campus Connect?{' '}
         <Link to="/register" className="rounded font-medium text-link hover:underline">
           Create a student account

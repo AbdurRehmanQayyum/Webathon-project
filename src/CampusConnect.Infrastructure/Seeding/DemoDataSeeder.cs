@@ -1,5 +1,6 @@
 using System.Text;
 using CampusConnect.Application.Common.Abstractions;
+using CampusConnect.Application.Common.Content;
 using CampusConnect.Application.Common.Exceptions;
 using CampusConnect.Application.Features.Clubs;
 using CampusConnect.Application.Features.Files;
@@ -30,6 +31,8 @@ public sealed class DemoDataSeeder(
     TimeProvider clock,
     ILogger<DemoDataSeeder> logger)
 {
+    private readonly Dictionary<string, Tag> _tags = [];
+
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {
         var settings = options.Value;
@@ -78,6 +81,7 @@ public sealed class DemoDataSeeder(
             {
                 FullName = seed.FullName,
                 Email = $"{seed.Key}@{DemoContent.EmailDomain}",
+                Username = seed.Key,
                 RegistrationNumber = seed.RegistrationNumber,
                 Semester = seed.Semester,
                 Title = seed.Title,
@@ -158,6 +162,19 @@ public sealed class DemoDataSeeder(
             db.Clubs.Add(club);
         }
 
+        // Interests mirror the first clubs each member joined
+        foreach (var (key, user) in users)
+        {
+            foreach (var category in DemoContent.Clubs
+                .Where(c => c.Members.Contains(key))
+                .Select(c => categories[c.Category])
+                .Distinct()
+                .Take(3))
+            {
+                user.Categories.Add(category);
+            }
+        }
+
         await db.SaveChangesAsync(cancellationToken);
         return clubs;
     }
@@ -173,12 +190,17 @@ public sealed class DemoDataSeeder(
                 Author = users[seed.Author],
                 Type = (byte)(seed.Link is null ? PostType.Text : PostType.Link),
                 Title = seed.Title,
-                Body = seed.Body,
+                Body = seed.Body is null ? null : Markup(seed.Body),
                 LinkUrl = seed.Link,
                 Status = (byte)ContentStatus.Published,
                 IsPinned = seed.Pinned,
                 CreatedAtUtc = createdAt
             };
+
+            foreach (var tag in RichText.Tags(seed.Body ?? string.Empty))
+            {
+                post.Tags.Add(TagFor(tag));
+            }
 
             foreach (var voter in seed.Upvotes ?? [])
             {
@@ -195,8 +217,27 @@ public sealed class DemoDataSeeder(
         }
     }
 
+    private static string Markup(string text) =>
+        RichText.Decorate(RichText.FromPlainText(text), new Dictionary<string, int>());
+
+    private Tag TagFor(string name)
+    {
+        if (!_tags.TryGetValue(name, out var tag))
+        {
+            tag = new Tag { Name = name };
+            _tags.Add(name, tag);
+        }
+
+        return tag;
+    }
+
     private static void AddComments(
-        Dictionary<string, User> users, Post post, DemoComment[] seeds, Comment? parent, DateTime after)
+        Dictionary<string, User> users,
+        Post post,
+        DemoComment[] seeds,
+        Comment? parent,
+        DateTime after,
+        Comment? root = null)
     {
         var createdAt = after;
         foreach (var seed in seeds)
@@ -207,12 +248,13 @@ public sealed class DemoDataSeeder(
                 Post = post,
                 Author = users[seed.Author],
                 ParentComment = parent,
-                Body = seed.Body,
+                RootComment = root,
+                Body = Markup(seed.Body),
                 Status = (byte)ContentStatus.Published,
                 CreatedAtUtc = createdAt
             };
             post.Comments.Add(comment);
-            AddComments(users, post, seed.Replies, comment, createdAt);
+            AddComments(users, post, seed.Replies, comment, createdAt, root ?? comment);
         }
     }
 
@@ -222,13 +264,13 @@ public sealed class DemoDataSeeder(
         var academics = clubs["academics"];
 
         db.ClubRequests.AddRange(
-            NewRequest("hassan.iqbal", clubs["web"].CategoryId, "Cloud Computing Circle",
+            NewRequest("student03", clubs["web"].CategoryId, "Cloud Computing Circle",
                 "Hands-on sessions about containers, hosting and deploying student projects.",
                 "Many project groups struggle to put their work online and there is no shared place to learn.", 2),
-            NewRequest("iqra.javed", clubs["web"].CategoryId, "Human Computer Interaction Group",
+            NewRequest("student06", clubs["web"].CategoryId, "Human Computer Interaction Group",
                 "Interface design, usability testing and accessibility reviews for course projects.",
                 "Design feedback is hard to get before evaluations, and a club would make it regular.", 1),
-            NewRequest("mariam.shah", academics.CategoryId, academics.Name, academics.Description,
+            NewRequest("student02", academics.CategoryId, academics.Name, academics.Description,
                 "Students across semesters need one place to ask course questions and share notes.", 52,
                 request =>
                 {
@@ -237,7 +279,7 @@ public sealed class DemoDataSeeder(
                     request.ReviewedByUser = admin;
                     request.ReviewedAtUtc = now.AddDays(-50);
                 }),
-            NewRequest("saad.mehmood", academics.CategoryId, "Campus Meme Society",
+            NewRequest("student07", academics.CategoryId, "Campus Meme Society",
                 "A place to post jokes and memes about university life and deadlines.",
                 "It would be a fun way for new students to get to know each other.", 7,
                 request =>
@@ -278,7 +320,7 @@ public sealed class DemoDataSeeder(
             {
                 Author = users[seed.Author],
                 Title = seed.Title,
-                Body = seed.Body,
+                Body = Markup(seed.Body),
                 LinkUrl = seed.Link,
                 LinkLabel = seed.LinkLabel,
                 Priority = (byte)(seed.Important ? AnnouncementPriority.Important : AnnouncementPriority.Normal),

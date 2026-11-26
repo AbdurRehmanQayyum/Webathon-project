@@ -2,7 +2,8 @@ import { ChevronDown, ChevronRight, Pencil, Reply, Trash2 } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { RichText } from '@/components/common/RichText'
+import { VoteButtons } from '@/components/common/VoteButtons'
+import { RichContent } from '@/components/editor/RichContent'
 import { useToast } from '@/components/feedback/toast-context'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
@@ -49,6 +50,7 @@ export function CommentItem({ comment, depth, canReply, actions }: CommentItemPr
                 size="xs"
               />
               {comment.author.fullName}
+              <span className="font-normal text-muted">@{comment.authorUsername}</span>
             </Link>
           ) : (
             <span className="italic">
@@ -78,10 +80,21 @@ export function CommentItem({ comment, depth, canReply, actions }: CommentItemPr
               }
             />
           ) : (
-            <RichText text={comment.body ?? ''} className="text-sm" />
+            <RichContent html={comment.body ?? ''} className="text-sm" />
           ))}
 
         <div className="flex flex-wrap items-center gap-1">
+          {isVisible && (
+            <VoteButtons
+              size="sm"
+              score={comment.score}
+              myVote={comment.myVote}
+              disabled={!comment.canReact}
+              onVote={(value) =>
+                actions.vote.mutate({ id: comment.id, value }, { onError: toast.error })
+              }
+            />
+          )}
           {comment.replies.length > 0 && (
             <Button
               size="sm"

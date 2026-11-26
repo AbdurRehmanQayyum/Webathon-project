@@ -33,7 +33,7 @@ export function PostActions({ post, onDeleted }: { post: Post; onDeleted?: () =>
       onSelect: () => void navigate(`/posts/${post.id}/edit`),
     })
   }
-  if (post.canModerate && post.status === 'Published') {
+  if (post.canPin && post.status === 'Published') {
     items.push({
       label: post.isPinned ? 'Unpin post' : 'Pin post',
       icon: post.isPinned ? PinOff : Pin,

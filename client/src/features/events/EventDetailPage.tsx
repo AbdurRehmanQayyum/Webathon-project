@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { useCurrentUser } from '@/features/auth/current-user'
-import { AttachmentList } from '@/features/files/AttachmentList'
+import { permissions } from '@/features/auth/permissions'
+import { AttachmentGallery } from '@/features/files/AttachmentGallery'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { formatDate, formatTimeRange } from '@/lib/format'
 import { useEvent } from './api'
@@ -22,14 +23,12 @@ export function EventDetailPage() {
   useDocumentTitle(event.data?.title)
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <QueryState query={event}>{(data) => <EventView event={data} />}</QueryState>
-    </div>
+    <QueryState query={event}>{(data) => <EventView event={data} />}</QueryState>
   )
 }
 
 function EventView({ event }: { event: DepartmentEvent }) {
-  const { isAdmin } = useCurrentUser()
+  const { can } = useCurrentUser()
   const [dialog, setDialog] = useState<'edit' | 'cancel' | null>(null)
   const isCancelled = event.status === 'Cancelled'
   const hasEnded = new Date(event.endsAtUtc) < new Date()
@@ -67,9 +66,9 @@ function EventView({ event }: { event: DepartmentEvent }) {
           ))}
         </dl>
         <RichText text={event.description} className="leading-relaxed" />
-        <AttachmentList attachments={event.attachments} />
+        <AttachmentGallery attachments={event.attachments} />
         <p className="text-sm text-muted">Organised by {event.organizer.fullName}</p>
-        {isAdmin && !isCancelled && (
+        {can(permissions.manageEvents) && !isCancelled && (
           <div className="flex flex-wrap gap-2 border-t border-line pt-4">
             <Button icon={<Pencil className="size-4" />} onClick={() => setDialog('edit')}>
               Edit event

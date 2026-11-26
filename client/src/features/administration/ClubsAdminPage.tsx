@@ -1,6 +1,6 @@
 import { Archive, ArchiveRestore, Pencil, Plus, UserCog } from 'lucide-react'
 import { useCallback, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { PageHeader } from '@/components/common/PageHeader'
 import { QueryState } from '@/components/common/QueryState'
 import { EmptyState } from '@/components/feedback/EmptyState'
@@ -13,6 +13,8 @@ import { IconButton } from '@/components/ui/IconButton'
 import { Pagination } from '@/components/ui/Pagination'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { Select } from '@/components/ui/Select'
+import { useCurrentUser } from '@/features/auth/current-user'
+import { permissions } from '@/features/auth/permissions'
 import { ClubIcon } from '@/features/clubs/ClubIcon'
 import type { Club } from '@/features/clubs/types'
 import { useListParams } from '@/hooks/useListParams'
@@ -23,7 +25,10 @@ import { ModeratorsDialog } from './ModeratorsDialog'
 type Dialog = { type: 'edit' | 'moderators' | 'status'; clubId: number } | { type: 'create' }
 
 export function ClubsAdminPage() {
+  const location = useLocation()
   const { page, get, set } = useListParams()
+  const { can } = useCurrentUser()
+  const canManage = can(permissions.manageClubs)
   const search = get('q')
   const status = get('status') || 'all'
   const onSearch = useCallback((q: string) => set({ q }), [set])
@@ -51,13 +56,15 @@ export function ClubsAdminPage() {
         title="Clubs"
         description="Create clubs, assign moderators and manage status."
         actions={
-          <Button
-            variant="primary"
-            icon={<Plus className="size-4" />}
-            onClick={() => setDialog({ type: 'create' })}
-          >
-            New club
-          </Button>
+          canManage && (
+            <Button
+              variant="primary"
+              icon={<Plus className="size-4" />}
+              onClick={() => setDialog({ type: 'create' })}
+            >
+              New club
+            </Button>
+          )
         }
       />
       <div className="mb-4 flex flex-wrap gap-2">
@@ -81,6 +88,7 @@ export function ClubsAdminPage() {
       </div>
       <QueryState
         query={clubs}
+        view={location.search}
         isEmpty={(data) => data.items.length === 0}
         empty={<EmptyState title="No clubs match" description="Adjust the search or filters." />}
       >
@@ -124,30 +132,36 @@ export function ClubsAdminPage() {
               ]}
               actions={(club) => (
                 <>
-                  <IconButton
-                    size="icon-sm"
-                    label={`Edit ${club.name}`}
-                    icon={<Pencil className="size-4" />}
-                    onClick={() => setDialog({ type: 'edit', clubId: club.id })}
-                  />
-                  <IconButton
-                    size="icon-sm"
-                    label={`Moderators of ${club.name}`}
-                    icon={<UserCog className="size-4" />}
-                    onClick={() => setDialog({ type: 'moderators', clubId: club.id })}
-                  />
-                  <IconButton
-                    size="icon-sm"
-                    label={`${club.status === 'Active' ? 'Archive' : 'Restore'} ${club.name}`}
-                    icon={
-                      club.status === 'Active' ? (
-                        <Archive className="size-4" />
-                      ) : (
-                        <ArchiveRestore className="size-4" />
-                      )
-                    }
-                    onClick={() => setDialog({ type: 'status', clubId: club.id })}
-                  />
+                  {canManage && (
+                    <IconButton
+                      size="icon-sm"
+                      label={`Edit ${club.name}`}
+                      icon={<Pencil className="size-4" />}
+                      onClick={() => setDialog({ type: 'edit', clubId: club.id })}
+                    />
+                  )}
+                  {can(permissions.assignModerators) && (
+                    <IconButton
+                      size="icon-sm"
+                      label={`Moderators of ${club.name}`}
+                      icon={<UserCog className="size-4" />}
+                      onClick={() => setDialog({ type: 'moderators', clubId: club.id })}
+                    />
+                  )}
+                  {canManage && (
+                    <IconButton
+                      size="icon-sm"
+                      label={`${club.status === 'Active' ? 'Archive' : 'Restore'} ${club.name}`}
+                      icon={
+                        club.status === 'Active' ? (
+                          <Archive className="size-4" />
+                        ) : (
+                          <ArchiveRestore className="size-4" />
+                        )
+                      }
+                      onClick={() => setDialog({ type: 'status', clubId: club.id })}
+                    />
+                  )}
                 </>
               )}
             />

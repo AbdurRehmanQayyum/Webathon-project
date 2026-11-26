@@ -17,9 +17,9 @@ export function MobileNavigation() {
     <>
       <nav
         aria-label="Primary"
-        className="safe-bottom fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line bg-surface lg:hidden"
+        className="app-tabbar safe-bottom fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line bg-surface lg:hidden"
       >
-        <NavLink to="/" end className={tab}>
+        <NavLink to="/feed" className={tab}>
           <House className="size-5" aria-hidden="true" />
           Home
         </NavLink>

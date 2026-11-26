@@ -1,6 +1,6 @@
 import { useState } from 'react'
+import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { Button } from '@/components/ui/Button'
-import { Textarea } from '@/components/ui/Input'
 
 interface CommentFormProps {
   label: string
@@ -22,10 +22,10 @@ export function CommentForm({
   onCancel,
 }: CommentFormProps) {
   const [body, setBody] = useState(initialValue)
-  const isEmpty = body.trim().length === 0
+  const isEmpty = body.length === 0
 
   const submit = () => {
-    if (!isEmpty && !loading) onSubmit(body.trim(), () => setBody(''))
+    if (!isEmpty && !loading) onSubmit(body, () => setBody(''))
   }
 
   return (
@@ -34,19 +34,17 @@ export function CommentForm({
         event.preventDefault()
         submit()
       }}
-      className="grid gap-2"
+      className="grid min-w-0 gap-2"
     >
-      <Textarea
-        aria-label={label}
-        placeholder={label}
-        rows={3}
+      <RichTextEditor
+        compact
+        label={label}
+        placeholder={`${label}. Use @ to mention and # to tag.`}
         maxLength={4000}
         value={body}
         autoFocus={autoFocus}
-        onChange={(event) => setBody(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) submit()
-        }}
+        onChange={setBody}
+        onSubmit={submit}
       />
       <div className="flex justify-end gap-2">
         {onCancel && (

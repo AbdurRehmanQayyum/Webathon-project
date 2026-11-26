@@ -8,16 +8,26 @@ public sealed class LiveUpdateQueue(IHubContext<LiveHub, ILiveClient> hub) : ILi
 {
     private readonly HashSet<int> _users = [];
     private readonly HashSet<int> _posts = [];
+    private bool _everyone;
 
     public void NotificationsChanged(int userId) => _users.Add(userId);
+
+    public void NotificationsChangedForEveryone() => _everyone = true;
 
     public void CommentsChanged(int postId) => _posts.Add(postId);
 
     public async Task FlushAsync()
     {
-        foreach (var userId in _users)
+        if (_everyone)
         {
-            await hub.Clients.User(userId.ToString()).NotificationsChanged();
+            await hub.Clients.All.NotificationsChanged();
+        }
+        else
+        {
+            foreach (var userId in _users)
+            {
+                await hub.Clients.User(userId.ToString()).NotificationsChanged();
+            }
         }
 
         foreach (var postId in _posts)
@@ -27,6 +37,7 @@ public sealed class LiveUpdateQueue(IHubContext<LiveHub, ILiveClient> hub) : ILi
 
         _users.Clear();
         _posts.Clear();
+        _everyone = false;
     }
 }
 

@@ -3,6 +3,7 @@ using CampusConnect.Application.Common.Exceptions;
 using CampusConnect.Application.Common.Models;
 using CampusConnect.Application.Features.Clubs;
 using CampusConnect.Application.Features.Notifications;
+using CampusConnect.Domain.Constants;
 using CampusConnect.Domain.Entities;
 using CampusConnect.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +32,7 @@ public sealed class ClubRequestService(
 
     public async Task<int> SubmitAsync(CreateClubRequestRequest request, CancellationToken cancellationToken)
     {
+        currentUser.Require(PermissionKeys.RequestClubs);
         var name = request.ProposedName.Trim();
         await clubCreator.EnsureCategoryExistsAsync(request.CategoryId, cancellationToken);
 

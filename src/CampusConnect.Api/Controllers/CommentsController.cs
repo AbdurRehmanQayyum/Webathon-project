@@ -1,4 +1,6 @@
+using CampusConnect.Application.Common.Models;
 using CampusConnect.Application.Features.Comments;
+using CampusConnect.Application.Features.Posts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CampusConnect.Api.Controllers;
@@ -7,9 +9,14 @@ namespace CampusConnect.Api.Controllers;
 public sealed class CommentsController(ICommentService comments) : ApiController
 {
     [HttpGet("posts/{postId:int}/comments")]
-    public async Task<ActionResult<IReadOnlyList<CommentDto>>> List(
-        int postId, CancellationToken cancellationToken) =>
-        Ok(await comments.ListAsync(postId, cancellationToken));
+    public async Task<ActionResult<PagedResult<CommentDto>>> List(
+        int postId, [FromQuery] CommentQuery query, CancellationToken cancellationToken) =>
+        await comments.ListAsync(postId, query, cancellationToken);
+
+    [HttpPut("comments/{commentId:int}/vote")]
+    public async Task<ActionResult<VoteResultDto>> Vote(
+        int commentId, VoteRequest request, CancellationToken cancellationToken) =>
+        await comments.VoteAsync(commentId, request, cancellationToken);
 
     [HttpPost("posts/{postId:int}/comments")]
     public async Task<ActionResult<CreatedResponse>> Create(

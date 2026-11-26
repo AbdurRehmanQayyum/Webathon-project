@@ -1,12 +1,9 @@
-using CampusConnect.Domain.Constants;
-
 namespace CampusConnect.Api.Auth;
 
 public static class Policies
 {
-    public const string Admin = "Admin";
+    // Permission keys double as policy names; these are the additional policies
     public const string Moderation = "Moderation";
+    public const string ClubDirectory = "ClubDirectory";
     public const string SensitiveRateLimit = "sensitive";
-
-    public static readonly string[] ModerationRoles = [RoleNames.Admin, RoleNames.Moderator];
 }

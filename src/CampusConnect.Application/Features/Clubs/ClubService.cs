@@ -1,6 +1,7 @@
 using CampusConnect.Application.Common.Abstractions;
 using CampusConnect.Application.Common.Exceptions;
 using CampusConnect.Application.Common.Models;
+using CampusConnect.Domain.Constants;
 using CampusConnect.Domain.Entities;
 using CampusConnect.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -48,6 +49,7 @@ public sealed class ClubService(IAppDbContext db, ICurrentUser currentUser) : IC
     // Club membership
     public async Task JoinAsync(int clubId, CancellationToken cancellationToken)
     {
+        currentUser.Require(PermissionKeys.JoinClubs);
         var status = await db.Clubs
             .Where(c => c.Id == clubId)
             .Select(c => (byte?)c.Status)

@@ -12,7 +12,9 @@ import { Input } from '@/components/ui/Input'
 import { Menu } from '@/components/ui/Menu'
 import { useLogout } from '@/features/auth/api'
 import { useCurrentUser } from '@/features/auth/current-user'
+import { permissions } from '@/features/auth/permissions'
 import { NotificationMenu } from '@/features/notifications/NotificationMenu'
+import { InstallButton } from '@/features/pwa/InstallButton'
 
 function GlobalSearch() {
   const navigate = useNavigate()
@@ -46,7 +48,7 @@ function GlobalSearch() {
 }
 
 export function Header() {
-  const { user } = useCurrentUser()
+  const { user, can } = useCurrentUser()
   const { isDark, setPreference } = useTheme()
   const logout = useLogout()
   const navigate = useNavigate()
@@ -54,14 +56,14 @@ export function Header() {
   const toast = useToast()
 
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-surface">
+    <header className="app-header sticky top-0 z-30 border-b border-line bg-surface">
       <div className="flex h-14 items-center gap-2 px-3 sm:px-5 lg:h-16">
         <div className="lg:hidden">
           <Logo />
         </div>
         <GlobalSearch />
         <div className="ml-auto flex items-center gap-0.5 sm:gap-1.5">
-          {location.pathname !== '/posts/new' && (
+          {location.pathname !== '/posts/new' && can(permissions.createPosts) && (
             <div className="hidden lg:block">
               <ButtonLink to="/posts/new" size="sm" icon={<PenLine className="size-4" />}>
                 New post
@@ -82,6 +84,7 @@ export function Header() {
               onClick={() => setPreference(isDark ? 'light' : 'dark')}
             />
           </div>
+          <InstallButton iconOnly />
           <NotificationMenu />
           <Menu
             header={

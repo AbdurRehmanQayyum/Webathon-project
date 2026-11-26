@@ -22,6 +22,15 @@ function subscribe(onChange: () => void) {
   return () => darkQuery.removeEventListener('change', onChange)
 }
 
+// The whole screen fades between themes where the browser supports it
+function crossFade(change: () => void) {
+  if (typeof document.startViewTransition !== 'function') return change()
+
+  const root = document.documentElement
+  root.dataset.theming = ''
+  void document.startViewTransition(change).finished.finally(() => delete root.dataset.theming)
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [preference, setStored] = useState(readPreference)
   const systemDark = useSyncExternalStore(subscribe, () => darkQuery.matches)
@@ -36,7 +45,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const setPreference = useCallback((next: ThemePreference) => {
     localStorage.setItem(STORAGE_KEY, next)
-    setStored(next)
+    const dark = next === 'dark' || (next === 'system' && darkQuery.matches)
+    crossFade(() => {
+      document.documentElement.classList.toggle('dark', dark)
+      setStored(next)
+    })
   }, [])
 
   const value = useMemo(

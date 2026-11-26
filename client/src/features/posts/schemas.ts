@@ -13,11 +13,13 @@ export const postSchema = z
     clubId: z.string().min(1, 'Choose a club.'),
     type: z.enum(['Text', 'Link']),
     title: z.string().trim().min(5, 'Use at least 5 characters.').max(200),
-    body: z.string().max(20000),
+    // Markup from the editor; the server also limits the visible text
+    body: z.string().max(60000, 'This post is too long.'),
+    tags: z.array(z.string()).max(8, 'Use up to 8 tags.'),
     linkUrl: z.string(),
   })
   .superRefine((values, context) => {
-    if (values.type === 'Text' && !values.body.trim()) {
+    if (values.type === 'Text' && !values.body) {
       context.addIssue({ code: 'custom', path: ['body'], message: 'Write something in your post.' })
     }
     if (values.type === 'Link') {

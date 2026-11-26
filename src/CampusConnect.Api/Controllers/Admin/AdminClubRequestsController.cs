@@ -1,12 +1,12 @@
-using CampusConnect.Api.Auth;
 using CampusConnect.Application.Common.Models;
 using CampusConnect.Application.Features.ClubRequests;
+using CampusConnect.Domain.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CampusConnect.Api.Controllers.Admin;
 
-[Authorize(Policy = Policies.Admin)]
+[Authorize(Policy = PermissionKeys.ReviewClubRequests)]
 [Route("api/admin/club-requests")]
 public sealed class AdminClubRequestsController(IClubRequestService requests) : ApiController
 {

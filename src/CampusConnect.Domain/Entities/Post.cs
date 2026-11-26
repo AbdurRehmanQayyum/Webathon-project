@@ -46,4 +46,6 @@ public partial class Post
     public virtual User? ModeratedByUser { get; set; }
 
     public virtual ICollection<PostVote> PostVotes { get; set; } = new List<PostVote>();
+
+    public virtual ICollection<Tag> Tags { get; set; } = new List<Tag>();
 }

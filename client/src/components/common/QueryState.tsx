@@ -1,7 +1,9 @@
 import type { UseQueryResult } from '@tanstack/react-query'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { ErrorState } from '@/components/feedback/ErrorState'
 import { ListSkeleton } from '@/components/feedback/Skeleton'
+import { cn } from '@/lib/cn'
+import { Reveal } from './Reveal'
 
 interface QueryStateProps<T> {
   query: UseQueryResult<T>
@@ -9,17 +11,46 @@ interface QueryStateProps<T> {
   skeleton?: ReactNode
   isEmpty?: (data: T) => boolean
   empty?: ReactNode
+  // Identifies the filter, sort or page being shown, so a change animates in
+  view?: string
+  className?: string
 }
 
 // One place for loading, error and empty handling
-export function QueryState<T>({ query, children, skeleton, isEmpty, empty }: QueryStateProps<T>) {
+export function QueryState<T>({
+  query,
+  children,
+  skeleton,
+  isEmpty,
+  empty,
+  view,
+  className,
+}: QueryStateProps<T>) {
+  // Old results stay on screen, dimmed, until the next view has arrived
+  const [shown, setShown] = useState(view)
+  if (!query.isPlaceholderData && shown !== view) setShown(view)
+
   if (query.data === undefined) {
     return query.isError ? (
-      <ErrorState error={query.error} onRetry={() => void query.refetch()} />
+      <Reveal>
+        <ErrorState error={query.error} onRetry={() => void query.refetch()} />
+      </Reveal>
     ) : (
-      (skeleton ?? <ListSkeleton />)
+      // Fast responses finish before the placeholder becomes visible
+      <div className="animate-appear-late">{skeleton ?? <ListSkeleton />}</div>
     )
   }
 
-  return isEmpty?.(query.data) ? empty : children(query.data)
+  return (
+    <Reveal
+      when={shown}
+      className={cn(
+        'transition-opacity duration-200',
+        query.isPlaceholderData && 'opacity-60',
+        className,
+      )}
+    >
+      {isEmpty?.(query.data) ? empty : children(query.data)}
+    </Reveal>
+  )
 }

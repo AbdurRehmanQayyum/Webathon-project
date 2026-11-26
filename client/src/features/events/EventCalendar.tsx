@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useState } from 'react'
 import { Link } from 'react-router'
+import { Reveal } from '@/components/common/Reveal'
 import { ErrorState } from '@/components/feedback/ErrorState'
 import { Button } from '@/components/ui/Button'
 import { IconButton } from '@/components/ui/IconButton'
@@ -18,6 +19,7 @@ import {
 import { formatDate, formatTime, pluralize } from '@/lib/format'
 import { useEvents } from './api'
 import { EventCard } from './EventCard'
+import { EventHoverCard } from './EventHoverCard'
 import type { DepartmentEvent, EventCategory } from './types'
 
 const MAX_CHIPS = 3
@@ -138,18 +140,19 @@ export function EventCalendar({ category }: { category: EventCategory | null }) 
                 <ul className="mt-1 hidden grid-cols-1 gap-1 md:grid">
                   {dayEvents.slice(0, MAX_CHIPS).map((event) => (
                     <li key={event.id} className="min-w-0">
-                      <Link
-                        to={`/events/${event.id}`}
-                        title={`${event.title}${event.status === 'Cancelled' ? ' (cancelled)' : ''}`}
-                        className={cn(
-                          'block truncate rounded px-1.5 py-0.5 text-xs',
-                          event.status === 'Cancelled'
-                            ? 'bg-danger-soft text-danger-fg line-through'
-                            : 'bg-selected text-selected-fg hover:underline',
-                        )}
-                      >
-                        {formatTime(event.startsAtUtc)} {event.title}
-                      </Link>
+                      <EventHoverCard event={event}>
+                        <Link
+                          to={`/events/${event.id}`}
+                          className={cn(
+                            'block truncate rounded px-1.5 py-0.5 text-xs',
+                            event.status === 'Cancelled'
+                              ? 'bg-danger-soft text-danger-fg line-through'
+                              : 'bg-selected text-selected-fg hover:underline',
+                          )}
+                        >
+                          {formatTime(event.startsAtUtc)} {event.title}
+                        </Link>
+                      </EventHoverCard>
                     </li>
                   ))}
                   {dayEvents.length > MAX_CHIPS && (
@@ -175,17 +178,19 @@ export function EventCalendar({ category }: { category: EventCategory | null }) 
             </Button>
           )}
         </div>
-        {agenda.length === 0 ? (
-          <p className="rounded-panel border border-dashed border-line-strong p-6 text-center text-sm text-muted">
-            {events.isPending ? 'Loading events…' : 'No events scheduled.'}
-          </p>
-        ) : (
-          <div className="grid gap-3 lg:grid-cols-2">
-            {agenda.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
-        )}
+        <Reveal when={(selected ?? month).toISOString()}>
+          {agenda.length === 0 ? (
+            <p className="rounded-panel border border-dashed border-line-strong p-6 text-center text-sm text-muted">
+              {events.isPending ? 'Loading events…' : 'No events scheduled.'}
+            </p>
+          ) : (
+            <div className="grid gap-3 lg:grid-cols-2">
+              {agenda.map((event) => (
+                <EventCard key={event.id} event={event} />
+              ))}
+            </div>
+          )}
+        </Reveal>
       </section>
     </div>
   )

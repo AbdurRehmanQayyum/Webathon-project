@@ -16,8 +16,11 @@ public sealed class AuthenticationTests(CampusConnectApp app)
         Assert.Equal(["Student"], student.User.Roles);
         var me = await student.GetAsync<CurrentUserDto>("/api/auth/me");
         Assert.Equal(student.User.Id, me.Id);
-        var admin = await student.RawGetAsync("/api/admin/overview");
-        Assert.Equal(HttpStatusCode.Forbidden, admin.StatusCode);
+        foreach (var path in new[] { "/api/admin/overview", "/api/admin/clubs", "/api/admin/permissions" })
+        {
+            var response = await student.RawGetAsync(path);
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        }
     }
 
     [Fact]

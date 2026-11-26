@@ -1,9 +1,17 @@
-import { Eye, FileText, RotateCw, UploadCloud, X } from 'lucide-react'
+import { Eye, RotateCw, UploadCloud, X } from 'lucide-react'
 import { useId, useRef, useState, type DragEvent } from 'react'
 import { IconButton } from '@/components/ui/IconButton'
 import { cn } from '@/lib/cn'
 import { formatBytes } from '@/lib/format'
+import type { FileType } from './api'
+import { MediaIcon } from './MediaIcon'
 import type { FileUploaderState, UploadItem } from './useFileUploader'
+
+// "Image up to 5 MB, Video up to 50 MB"
+function describeLimits(types: FileType[]) {
+  const limits = new Map(types.map((type) => [type.kind, type.maxSize]))
+  return [...limits].map(([kind, size]) => `${kind} up to ${formatBytes(size)}`).join(' · ')
+}
 
 export function FileUploader({ uploader, label }: { uploader: FileUploaderState; label: string }) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -41,7 +49,7 @@ export function FileUploader({ uploader, label }: { uploader: FileUploaderState;
         <span id={hintId} className="text-xs text-muted">
           {uploader.isFull
             ? `Limit of ${uploader.maxFiles} files reached`
-            : `Drop here or browse · ${uploader.allowed.join(', ')} · up to ${formatBytes(uploader.maxFileSize)}`}
+            : `Drop here or browse · ${describeLimits(uploader.types)}`}
         </span>
       </button>
       <input
@@ -49,7 +57,7 @@ export function FileUploader({ uploader, label }: { uploader: FileUploaderState;
         type="file"
         hidden
         multiple={uploader.maxFiles > 1}
-        accept={uploader.allowed.join(',')}
+        accept={uploader.types.map((type) => type.extension).join(',')}
         onChange={(event) => {
           uploader.add(Array.from(event.target.files ?? []))
           event.target.value = ''
@@ -72,17 +80,22 @@ export function FileUploader({ uploader, label }: { uploader: FileUploaderState;
 }
 
 function UploadRow({ item, uploader }: { item: UploadItem; uploader: FileUploaderState }) {
-  const isImage = item.file.type.startsWith('image/') && item.status !== 'invalid'
+  const isValid = item.status !== 'invalid'
+  const isImage = isValid && item.file.type.startsWith('image/')
+  const isVideo = isValid && item.file.type.startsWith('video/')
+  const isAudio = isValid && item.file.type.startsWith('audio/')
   const canPreview = item.file.type === 'application/pdf' || item.file.type === 'text/plain'
   const isUploading = item.status === 'uploading'
 
   return (
-    <li className="flex items-center gap-3 rounded-control border border-line bg-surface p-2">
+    <li className="flex flex-wrap items-center gap-3 rounded-control border border-line bg-surface p-2">
       {isImage ? (
         <img src={item.previewUrl} alt="" className="size-11 shrink-0 rounded-md object-cover" />
+      ) : isVideo ? (
+        <video src={item.previewUrl} muted preload="metadata" className="size-11 shrink-0 rounded-md object-cover" />
       ) : (
         <span className="grid size-11 shrink-0 place-items-center rounded-md bg-surface-alt">
-          <FileText className="size-5 text-muted" aria-hidden="true" />
+          <MediaIcon contentType={item.file.type} className="size-5 text-muted" />
         </span>
       )}
       <div className="min-w-0 flex-1">
@@ -138,6 +151,7 @@ function UploadRow({ item, uploader }: { item: UploadItem; uploader: FileUploade
         icon={<X className="size-4" />}
         onClick={() => uploader.remove(item)}
       />
+      {isAudio && !isUploading && <audio src={item.previewUrl} controls className="h-9 w-full" />}
     </li>
   )
 }

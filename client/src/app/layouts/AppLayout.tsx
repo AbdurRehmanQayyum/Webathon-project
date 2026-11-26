@@ -1,6 +1,7 @@
-import { motion } from 'motion/react'
 import { Suspense } from 'react'
 import { Outlet, ScrollRestoration, useLocation } from 'react-router'
+import { hasViewTransitions } from '@/app/routes/page-transitions'
+import { Reveal } from '@/components/common/Reveal'
 import { BrandLoader } from '@/components/feedback/BrandLoader'
 import { Header } from '@/components/navigation/Header'
 import { MobileNavigation } from '@/components/navigation/MobileNavigation'
@@ -29,18 +30,13 @@ export function AppLayout() {
         <main
           id="content"
           tabIndex={-1}
-          className="mx-auto w-full max-w-7xl flex-1 px-3 pt-5 pb-24 outline-none sm:px-5 lg:px-8 lg:pb-10"
+          className="page-content w-full flex-1 px-3 pt-5 pb-24 outline-none sm:px-5 lg:px-8 lg:pb-10"
         >
-          <motion.div
-            key={section}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.18 }}
-          >
+          <Reveal key={section} disabled={hasViewTransitions}>
             <Suspense fallback={<BrandLoader />}>
               <Outlet />
             </Suspense>
-          </motion.div>
+          </Reveal>
         </main>
       </div>
       <MobileNavigation />

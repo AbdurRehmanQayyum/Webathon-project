@@ -21,12 +21,14 @@ export interface AdminOverview {
 export interface AdminUser {
   id: number
   fullName: string
+  username: string
   avatarFileId: number | null
   email: string
   registrationNumber: string | null
   semester: number | null
   title: string | null
   isActive: boolean
+  mustChangePassword: boolean
   createdAtUtc: string
   lastLoginAtUtc: string | null
   roles: Role[]
@@ -44,6 +46,16 @@ export const useAdminUsers = (params: QueryParams, enabled = true) =>
     queryFn: ({ signal }) => api.get<PagedResult<AdminUser>>('/api/admin/users', params, signal),
     placeholderData: keepPreviousData,
     enabled,
+  })
+
+export const useUserSearch = (search: string) =>
+  useQuery({
+    queryKey: ['users', 'search', search],
+    queryFn: () =>
+      api.get<{ id: number; username: string; fullName: string }[]>('/api/users/search', {
+        search,
+      }),
+    enabled: search.length > 0,
   })
 
 export const useAdminClubs = (params: QueryParams) =>
@@ -66,9 +78,23 @@ function useRefreshAll() {
   return () => queryClient.invalidateQueries()
 }
 
+export interface NewUser {
+  fullName: string
+  email: string
+  role: 'Student' | 'Admin'
+  registrationNumber: string | null
+  semester: number | null
+  title: string | null
+  temporaryPassword: string
+}
+
 export function useUserActions() {
   const onSuccess = useRefreshAll()
   return {
+    create: useMutation({
+      mutationFn: (user: NewUser) => api.post<{ id: number }>('/api/admin/users', user),
+      onSuccess,
+    }),
     setStatus: useMutation({
       mutationFn: ({ id, isActive }: { id: number; isActive: boolean }) =>
         api.put(`/api/admin/users/${id}/status`, { isActive }),
