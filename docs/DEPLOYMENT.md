@@ -1,7 +1,8 @@
 # Deployment (Windows x64 server)
 
 One self-contained application serves the API, the SignalR hub and the React app from one domain.
-The server needs SQL Server; it does not need .NET or Node.js.
+The server needs SQL Server, IIS and the .NET 10 Hosting Bundle (for the IIS module). It does not
+need Node.js or a separate .NET runtime for the app itself.
 
 ## 1. Settings
 
@@ -33,7 +34,7 @@ git. If you are starting from a fresh clone, create it with this shape:
 The four storage values come from Cloudflare R2 (see [STORAGE.md](STORAGE.md)). Until they are set,
 the app runs but uploads and file previews return "storage unavailable".
 
-## 2. Build
+## 2. Build the packages
 
 On the development machine:
 
@@ -41,81 +42,39 @@ On the development machine:
 powershell -ExecutionPolicy Bypass -File scripts/publish.ps1
 ```
 
-| Output | Contents |
+| Zip in `artifacts/` | Contents |
 | --- | --- |
-| `artifacts/publish/app` | `CampusConnect.Api.exe`, the web app and production settings |
-| `artifacts/publish/database` | `campusconnect-db.exe` and the SQL scripts |
+| `CampusConnect-site.zip` | `CampusConnect.Api.exe`, the web app, `web.config`, production settings. **Contains secrets.** |
+| `CampusConnect-database.zip` | `campusconnect-db.exe` (EF Core migration bundle), SQL scripts, `Setup.cmd` |
 
-Stop a running development server first: the script reinstalls client packages.
+Add `-CleanInstall` to reinstall client packages first (stop the development web server for that).
 
-## 3. Database
+## 3. Deploy to an existing IIS website
 
-Copy both folders to the server. As a Windows user with permission to create databases:
+The server needs SQL Server (default instance), a website with its own application pool and an HTTPS
+certificate, and the .NET 10 Hosting Bundle.
 
-```powershell
-.\campusconnect-db.exe
-```
+1. Stop the website.
+2. Extract the site zip straight into the website folder.
+3. Extract the database zip outside the website folder.
+4. Right-click `Setup.cmd` and choose **Run as administrator**, as a SQL Server administrator.
 
-It uses `Server=.` with Windows authentication, creates `CampusConnectDB` when missing and applies the
-scripts that have not run yet. For another instance:
-
-```powershell
-.\campusconnect-db.exe --connection "Server=.\SQLEXPRESS;Database=CampusConnectDB;Trusted_Connection=True;TrustServerCertificate=True"
-```
-
-## 4. Give the app access to the database
-
-The app signs in to SQL Server as the Windows account that runs it. For IIS with an application pool
-named `CampusConnect`, run in SSMS (for a Windows service use that service account instead):
-
-```sql
-CREATE LOGIN [IIS APPPOOL\CampusConnect] FROM WINDOWS;
-GO
-USE CampusConnectDB;
-CREATE USER [IIS APPPOOL\CampusConnect] FOR LOGIN [IIS APPPOOL\CampusConnect];
-ALTER ROLE db_datareader ADD MEMBER [IIS APPPOOL\CampusConnect];
-ALTER ROLE db_datawriter ADD MEMBER [IIS APPPOOL\CampusConnect];
-```
-
-## 5. Host with HTTPS
+`Setup.cmd` finds the website by its files, runs the database bundle with the connection string from
+the production settings, gives the application pool account read and write access to the database,
+allows writing to `App_Data` and `logs`, sets the pool to "No Managed Code", restarts the website and
+checks `/health`. Use `Setup.cmd -SiteName <name>` if several websites contain the app.
 
 **HTTPS is required.** Session cookies are secure-only; over plain HTTP the API answers
-"This site requires HTTPS".
+"This site requires HTTPS". A reverse proxy on the same host is trusted for forwarded headers; a
+proxy on another host must be added to `ForwardedHeadersOptions`.
 
-**IIS:** install the ASP.NET Core Hosting Bundle and the WebSocket Protocol feature, point a site at
-the `app` folder (application pool: "No Managed Code"), add an HTTPS binding with your certificate
-and give the pool identity write access to `app\App_Data`.
+## 4. After installing
 
-**Windows service without IIS:** add a certificate endpoint to the production settings, for example
-
-```json
-"Kestrel": {
-  "Endpoints": {
-    "Https": {
-      "Url": "https://*:443",
-      "Certificate": { "Subject": "<your domain>", "Store": "My", "Location": "LocalMachine" }
-    }
-  }
-}
-```
-
-then register the service:
-
-```powershell
-sc.exe create CampusConnect binPath= "C:\Apps\CampusConnect\CampusConnect.Api.exe" start= auto
-```
-
-A reverse proxy on the same host is trusted for forwarded headers. A proxy on another host must be
-added to `ForwardedHeadersOptions`.
-
-## 6. Verify
-
-1. `GET /health` returns `Healthy`.
-2. Sign in with the bootstrap administrator; you are asked to set a new password.
-3. Remove the `AdminBootstrap:Password` value from the server settings.
-4. Reload a deep link such as `/events`.
-5. Upload an image to a post and preview it (confirms storage).
-6. Confirm the browser offers to install the app.
+1. Sign in with the bootstrap administrator; you are asked to set a new password.
+2. Remove the `AdminBootstrap:Password` value from the server settings.
+3. Reload a deep link such as `/events`.
+4. Upload an image to a post and preview it (confirms storage).
+5. Confirm the browser offers to install the app.
 
 ## Keep safe
 
@@ -123,4 +82,8 @@ added to `ForwardedHeadersOptions`.
 - Changing `Jwt:Key` signs everyone out.
 - Run one instance, or add a SignalR backplane and shared data protection keys.
 
-No external deployment has been performed from this repository.
+## Verification status
+
+On 26 November 2026 both zips were extracted on a development computer: the database bundle ran
+against SQL Server, and the app served the web app and API over HTTPS in Production. `Setup.cmd` has
+not been run on an IIS server.

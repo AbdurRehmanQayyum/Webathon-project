@@ -9,8 +9,8 @@ Community platform for CS Department students: React SPA, ASP.NET Core 10 API, S
 - `src/CampusConnect.Infrastructure`: DbContext, storage, hashing, seeding.
 - `src/CampusConnect.Api`: controllers, auth, middleware, SignalR hub, startup.
 - `client/src`: `app/`, `components/`, `features/<name>/`, `services/`, `hooks/`, `lib/`, `styles/`.
-- `database/`: numbered SQL scripts. `tools/`: database migration bundle. `tests/`: integration tests.
-  `docs/`: documentation.
+- `database/`: numbered SQL scripts. `tools/`: database migration bundle. `deploy/`: server setup script.
+  `tests/`: integration tests. `docs/`: documentation.
 
 ## Database rules (Database First)
 

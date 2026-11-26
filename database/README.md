@@ -12,7 +12,7 @@ run again.
 | `05_AddObjectStorageMetadata.sql` | Stored-file metadata for object storage |
 | `06_AddCommunityFeatures.sql` | Usernames, comment votes, tags, interests, role permissions |
 
-**Servers:** `scripts/publish.ps1` also builds `campusconnect-db.exe`, an EF Core migration bundle
+**Servers:** `scripts/publish.ps1` packages `campusconnect-db.exe`, an EF Core migration bundle
 that runs these scripts (see [DEPLOYMENT.md](../docs/DEPLOYMENT.md)). A new script needs a matching
 class in `tools/CampusConnect.DbMigrator/Migrations`.
 
