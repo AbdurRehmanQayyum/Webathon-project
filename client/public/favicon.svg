@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <style>
+    .arc { stroke-width: 9; stroke-linecap: round; }
+    .outer { stroke: #8E1EA2; }
+    .inner { stroke: #C654C3; }
+    .node { fill: #ED96D7; transform-origin: 52px 32px; animation: pulse 2.4s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(.7); } }
+    @media (prefers-color-scheme: dark) { .outer { stroke: #C654C3; } .inner { stroke: #ED96D7; } .node { fill: #FFC0DE; } }
+    @media (prefers-reduced-motion: reduce) { .node { animation: none; } }
+  </style>
+  <path class="arc outer" d="M49.7 13.7A25.5 25.5 0 1 0 49.7 50.3"/>
+  <path class="arc inner" d="M40.5 23.5A12 12 0 1 0 40.5 40.5"/>
+  <circle class="node" cx="52" cy="32" r="6.5"/>
+</svg>

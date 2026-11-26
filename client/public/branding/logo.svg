@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Campus Connect">
+  <style>
+    .arc { stroke-width: 7; stroke-linecap: round; stroke-dasharray: 100 200; animation: draw .8s cubic-bezier(.65, 0, .35, 1) backwards; }
+    .inner { animation-delay: .18s; }
+    .node { transform-origin: 50px 32px; animation: pop .45s .75s cubic-bezier(.34, 1.56, .64, 1) backwards; }
+    @keyframes draw { from { stroke-dashoffset: 100; opacity: 0; } 15% { opacity: 1; } to { stroke-dashoffset: 0; } }
+    @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+    @media (prefers-reduced-motion: reduce) { .arc, .node { animation: none; } }
+  </style>
+  <path class="arc" pathLength="100" stroke="#8E1EA2" d="M48.97 15.03A24 24 0 1 0 48.97 48.97"/>
+  <path class="arc inner" pathLength="100" stroke="#C654C3" d="M40.49 23.51A12 12 0 1 0 40.49 40.49"/>
+  <circle class="node" cx="50" cy="32" r="5" fill="#ED96D7"/>
+</svg>

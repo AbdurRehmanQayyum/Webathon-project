@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Campus Connect</title>
+    <meta name="description" content="Clubs, discussions, announcements and events for CS students." />
+    <meta name="theme-color" content="#8E1EA2" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Campus" />
+    <script src="/theme-init.js"></script>
+    <style>
+      html { background: #f8f7fa; }
+      html.dark { background: #141018; }
+      .splash { position: fixed; inset: 0; display: grid; place-items: center; }
+      .splash svg { width: 72px; height: 72px; }
+      .splash path { fill: none; stroke-width: 7; stroke-linecap: round; transform-origin: 32px 32px; animation: splash-spin 1.5s cubic-bezier(.65, 0, .35, 1) infinite; }
+      .splash path + path { animation-direction: reverse; }
+      .splash circle { transform-origin: 32px 32px; animation: splash-pulse 1.5s ease-in-out infinite; }
+      @keyframes splash-spin { to { transform: rotate(360deg); } }
+      @keyframes splash-pulse { 0%, 100% { transform: scale(.55); } 50% { transform: scale(1); } }
+      @media (prefers-reduced-motion: reduce) { .splash path, .splash circle { animation: none; } }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div class="splash" role="status" aria-label="Loading Campus Connect">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <path stroke="#8E1EA2" d="M48.97 15.03A24 24 0 1 0 48.97 48.97" />
+          <path stroke="#C654C3" d="M40.49 23.51A12 12 0 1 0 40.49 40.49" />
+          <circle cx="32" cy="32" r="5" fill="#ED96D7" />
+        </svg>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

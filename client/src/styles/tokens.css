@@ -1,0 +1,135 @@
+/* Semantic design tokens. Components use these names, never raw colors. */
+:root {
+  --brand-primary: #8e1ea2;
+  --brand-secondary: #c654c3;
+  --brand-accent: #ed96d7;
+  --brand-soft: #ffc0de;
+
+  --bg: #f8f7fa;
+  --surface: #ffffff;
+  --surface-alt: #f6f1f8;
+  --text: #211a27;
+  --text-muted: #6a6172;
+  --border: #e8e0ec;
+  --border-strong: #cfc2d5;
+
+  --primary: #8e1ea2;
+  --primary-hover: #7a188c;
+  --primary-active: #681477;
+  --on-primary: #ffffff;
+  --link: #8e1ea2;
+  --selected: #f4e5f6;
+  --selected-text: #741884;
+  --focus: #8e1ea2;
+  --overlay: rgb(33 26 39 / 0.45);
+
+  --success: #176b42;
+  --success-soft: #e4f3ea;
+  --warning: #805300;
+  --warning-soft: #fcf0d6;
+  --danger: #b3261e;
+  --danger-hover: #971f19;
+  --danger-soft: #fbeae9;
+  --info: #1b5a9e;
+  --info-soft: #e6eff9;
+
+  --shadow-sm: 0 1px 2px rgb(33 26 39 / 0.05);
+  --shadow-md: 0 8px 24px -6px rgb(33 26 39 / 0.14);
+  --shadow-lg: 0 24px 56px -12px rgb(33 26 39 / 0.28);
+
+  --logo-outer: #8e1ea2;
+  --logo-inner: #c654c3;
+  --logo-node: #ed96d7;
+
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #141018;
+  --surface: #1d1722;
+  --surface-alt: #28202f;
+  --text: #f7f2f8;
+  --text-muted: #b6a9bf;
+  --border: #372c40;
+  --border-strong: #53445f;
+
+  --primary: #9c2bb0;
+  --primary-hover: #ac37c0;
+  --primary-active: #8e1ea2;
+  --link: #ed96d7;
+  --selected: #3a2343;
+  --selected-text: #ffc0de;
+  --focus: #ed96d7;
+  --overlay: rgb(5 3 7 / 0.65);
+
+  --success: #7ad6a6;
+  --success-soft: #16301f;
+  --warning: #f0c36a;
+  --warning-soft: #33270e;
+  --danger: #c63a32;
+  --danger-hover: #d4463d;
+  --danger-soft: #3a1a19;
+  --info: #8fc1f5;
+  --info-soft: #142a40;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 8px 24px -6px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 24px 56px -12px rgb(0 0 0 / 0.65);
+
+  --logo-outer: #c654c3;
+  --logo-inner: #ed96d7;
+  --logo-node: #ffc0de;
+
+  color-scheme: dark;
+}
+
+/* Error text needs a lighter tone than the button fill in dark mode */
+:root {
+  --danger-text: var(--danger);
+}
+
+.dark {
+  --danger-text: #ff9d95;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-alt: var(--surface-alt);
+  --color-fg: var(--text);
+  --color-muted: var(--text-muted);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-on-primary: var(--on-primary);
+  --color-secondary: var(--brand-secondary);
+  --color-accent: var(--brand-accent);
+  --color-soft: var(--brand-soft);
+  --color-link: var(--link);
+  --color-selected: var(--selected);
+  --color-selected-fg: var(--selected-text);
+  --color-focus: var(--focus);
+  --color-overlay: var(--overlay);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-fg: var(--danger-text);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+
+  --shadow-card: var(--shadow-sm);
+  --shadow-pop: var(--shadow-md);
+  --shadow-dialog: var(--shadow-lg);
+
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --radius-control: 0.5rem;
+  --radius-panel: 0.75rem;
+}

@@ -1,0 +1,98 @@
+/* Animated brand mark: draw-in on arrival, counter-rotating arcs while loading */
+.brand-mark path {
+  fill: none;
+  stroke-width: 7;
+  stroke-linecap: round;
+  transform-origin: 32px 32px;
+}
+
+.brand-mark__outer {
+  stroke: var(--logo-outer);
+}
+
+.brand-mark__inner {
+  stroke: var(--logo-inner);
+}
+
+.brand-mark__node {
+  fill: var(--logo-node);
+}
+
+.brand-mark--intro path {
+  stroke-dasharray: 100 200;
+  animation: brand-draw 0.8s cubic-bezier(0.65, 0, 0.35, 1) backwards;
+}
+
+.brand-mark--intro .brand-mark__inner {
+  animation-delay: 0.18s;
+}
+
+.brand-mark--intro .brand-mark__node {
+  transform-origin: 50px 32px;
+  animation: brand-pop 0.45s 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+/* Hovering the brand link makes the arcs turn once */
+.brand-link:hover .brand-mark path {
+  transition: transform 0.7s cubic-bezier(0.65, 0, 0.35, 1);
+  transform: rotate(360deg);
+}
+
+.brand-link:hover .brand-mark .brand-mark__inner {
+  transform: rotate(-360deg);
+}
+
+.brand-mark--loading path {
+  animation: brand-spin 1.5s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+.brand-mark--loading .brand-mark__inner {
+  animation-direction: reverse;
+}
+
+.brand-mark--loading .brand-mark__node {
+  transform-origin: 32px 32px;
+  animation: brand-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes brand-draw {
+  from {
+    stroke-dashoffset: 100;
+    opacity: 0;
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes brand-pop {
+  from {
+    transform: scale(0);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes brand-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes brand-pulse {
+  0%,
+  100% {
+    transform: scale(0.55);
+  }
+
+  50% {
+    transform: scale(1);
+  }
+}

@@ -1,23 +1,29 @@
 # Dependencies
 node_modules/
-vendor/
-.venv/
-venv/
-__pycache__/
-*.py[cod]
 
-# Build output
-dist/
-build/
-out/
-.next/
-.nuxt/
-coverage/
+# .NET build output
+bin/
+obj/
+artifacts/
+TestResults/
+*.user
+.vs/
+
+# Client build output
+client/dist/
+client/dev-dist/
+*.tsbuildinfo
+
+# Uploaded files and local data
+App_Data/
 
 # Environment and secrets
 .env
 .env.*
 !.env.example
+appsettings.Local.json
+appsettings.Production.json
+*.pfx
 
 # Logs
 logs/
